@@ -1,5 +1,5 @@
-class_name DotObjectiveHoldout
-extends DotObjective
+class_name GSObjectiveHoldout
+extends GSObjective
 
 ## Hold it, or survive it, for a length of time.
 ##
@@ -7,14 +7,14 @@ extends DotObjective
 ##
 ## - [b]King of the hill.[/b] One point, two clocks; the owning team's runs down and
 ##   the other team's is frozen where it stopped. Set
-##   [member DotObjectiveDef.holdout_owner_of] to a [DotObjectiveCapture]'s id and this
+##   [member GSObjectiveDef.holdout_owner_of] to a [GSObjectiveCapture]'s id and this
 ##   reads its owner every tick. The point is the capture; the clock is this.
 ## - [b]A finale.[/b] Turn on the radio and stay alive for four minutes with something
-##   coming at you. Set [member DotObjectiveDef.holdout_requires_presence] and the
+##   coming at you. Set [member GSObjectiveDef.holdout_requires_presence] and the
 ##   clock only counts while somebody is still standing in the area, so being dragged
 ##   off the roof stops it rather than losing it.
 ##
-## [member DotObjective.progress] is the leading team's fraction of the way there.
+## [member GSObjective.progress] is the leading team's fraction of the way there.
 ##
 ## [b]A frozen clock keeps its value.[/b] That is the whole of king of the hill and it
 ## is the thing a naive implementation gets wrong: resetting the other team's clock on
@@ -24,16 +24,16 @@ extends DotObjective
 ## team id -> ticks still to hold.
 var clocks: Dictionary = {}
 
-## When [member DotObjectiveDef.holdout_owner_of] is set, the objective it reads.
-## Wired by [DotObjectiveSet] at build time, because an objective does not get to go
+## When [member GSObjectiveDef.holdout_owner_of] is set, the objective it reads.
+## Wired by [GSObjectiveSet] at build time, because an objective does not get to go
 ## looking for another one.
-var linked: DotObjective = null
+var linked: GSObjective = null
 
 var _last_fraction: float = -1.0
 var _leader: int = 0
 
 
-func _init(p_def: DotObjectiveDef = null) -> void:
+func _init(p_def: GSObjectiveDef = null) -> void:
 	super(p_def)
 	if p_def != null and p_def.initial_team > 0:
 		clocks[p_def.initial_team] = p_def.holdout_ticks
@@ -79,7 +79,7 @@ func _reset() -> void:
 	_last_fraction = -1.0
 
 
-func _advance(presence: DotObjectivePresence, _rules: DotObjectiveRules) -> void:
+func _advance(presence: GSObjectivePresence, _rules: GSObjectiveRules) -> void:
 	var running := _teams_running(presence)
 
 	if running.is_empty():
@@ -107,7 +107,7 @@ func _advance(presence: DotObjectivePresence, _rules: DotObjectiveRules) -> void
 
 
 ## Whose clocks run this tick.
-func _teams_running(presence: DotObjectivePresence) -> PackedInt32Array:
+func _teams_running(presence: GSObjectivePresence) -> PackedInt32Array:
 	var out := PackedInt32Array()
 	if locked:
 		return out
@@ -121,7 +121,7 @@ func _teams_running(presence: DotObjectivePresence) -> PackedInt32Array:
 		var ids: Array = counts.keys()
 		ids.sort()
 		for team_id: Variant in ids:
-			var c: DotObjectivePresence.Count = counts[team_id]
+			var c: GSObjectivePresence.Count = counts[team_id]
 			if c.cappers > 0:
 				out.append(int(team_id))
 		return out
@@ -133,7 +133,7 @@ func _teams_running(presence: DotObjectivePresence) -> PackedInt32Array:
 		return out
 
 	var here := presence.counts_in(def.area, PackedInt32Array([owner]))
-	var mine: DotObjectivePresence.Count = here.get(owner, null)
+	var mine: GSObjectivePresence.Count = here.get(owner, null)
 	if mine != null and mine.cappers > 0:
 		out.append(owner)
 	return out

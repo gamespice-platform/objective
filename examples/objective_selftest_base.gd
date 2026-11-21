@@ -42,8 +42,8 @@ class World extends RefCounted:
 			out.append(str(id))
 		return out
 
-	func presence() -> DotObjectivePresence:
-		var p := DotObjectivePresence.of(
+	func presence() -> GSObjectivePresence:
+		var p := GSObjectivePresence.of(
 			keys,
 			func(key: String) -> Vector3: return positions.get(key, Vector3.ZERO),
 			func(key: String) -> int: return int(teams.get(key, 0)),

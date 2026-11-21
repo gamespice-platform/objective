@@ -1,24 +1,24 @@
-class_name DotObjectiveFlag
-extends DotObjective
+class_name GSObjectiveFlag
+extends GSObjective
 
 ## Carry theirs to yours. The intelligence, the flag, the briefcase.
 ##
-## [member DotObjective.owner_team] is whose flag it is and never changes — a flag
+## [member GSObjective.owner_team] is whose flag it is and never changes — a flag
 ## belongs to the team that defends it, and the team that scores with it is the other
 ## one. That is the opposite of a control point and getting it the wrong way round is
 ## the most common bug in a hand-written capture-the-flag mode: the capture is scored
 ## for the wrong side and nobody notices until the scoreboard is read.
 ##
-## [member DotObjective.progress] is the carrier's journey home, 0 at the flag's own
+## [member GSObjective.progress] is the carrier's journey home, 0 at the flag's own
 ## base and 1 at the capture point — which is the only number that means anything to
 ## a spectator, and is deliberately not "how long until it returns".
 ##
 ## [b]Three settings turn this into three different games.[/b]
-## [member DotObjectiveDef.flag_touch_returns] is instant return on a team-mate's
+## [member GSObjectiveDef.flag_touch_returns] is instant return on a team-mate's
 ## touch, against the timer that both teams play around;
-## [member DotObjectiveDef.flag_requires_own_at_home] is what stops a stalemate being
+## [member GSObjectiveDef.flag_requires_own_at_home] is what stops a stalemate being
 ## two simultaneous captures; and
-## [member DotObjectiveDef.flag_return_ticks] is how long a dropped flag is a decision
+## [member GSObjectiveDef.flag_return_ticks] is how long a dropped flag is a decision
 ## rather than a formality.
 
 enum State {
@@ -49,7 +49,7 @@ var _home: Vector3 = Vector3.ZERO
 var _last_fraction: float = -1.0
 
 
-func _init(p_def: DotObjectiveDef = null) -> void:
+func _init(p_def: GSObjectiveDef = null) -> void:
 	super(p_def)
 	if p_def != null and p_def.area != null:
 		_home = p_def.area.centre
@@ -61,14 +61,14 @@ func home_team() -> int:
 	return def.initial_team if def != null else 0
 
 
-func capture_area() -> DotObjectiveArea:
+func capture_area() -> GSObjectiveArea:
 	if def == null:
 		return null
 	return def.flag_capture_area if def.flag_capture_area != null else def.area
 
 
 ## Where [param carrier_team] scores with this flag: their own stand when the def says so, which needs [param flags] to find it.
-func capture_area_for(carrier_team: int, flags: Array[DotObjectiveFlag]) -> DotObjectiveArea:
+func capture_area_for(carrier_team: int, flags: Array[GSObjectiveFlag]) -> GSObjectiveArea:
 	if def != null and def.flag_capture_at_own_stand:
 		for f in flags:
 			if f != null and f.home_team() == carrier_team:
@@ -115,20 +115,20 @@ func _reset() -> void:
 
 ## Somebody touched it. What happens depends on which side they are on, which is the
 ## whole of capture-the-flag in one function.
-func touch(key: String, presence: DotObjectivePresence) -> DotResult:
+func touch(key: String, presence: GSObjectivePresence) -> GSResult:
 	if is_finished():
-		return DotResult.fail(DotError.CODE_STATE, "This flag is out of play.")
+		return GSResult.fail(GSError.CODE_STATE, "This flag is out of play.")
 	if not presence.is_alive(key):
-		return DotResult.fail(DotError.CODE_STATE, "A dead player touches nothing.")
+		return GSResult.fail(GSError.CODE_STATE, "A dead player touches nothing.")
 
 	var team := presence.team_of(key)
 	if team <= 0:
-		return DotResult.fail(DotError.CODE_FORBIDDEN, "No team, no flag.")
+		return GSResult.fail(GSError.CODE_FORBIDDEN, "No team, no flag.")
 
 	var where := presence.position_of(key)
 	if where.distance_to(at) > def.flag_touch_radius and state != State.CARRIED:
-		return DotResult.fail(
-			DotError.CODE_STATE,
+		return GSResult.fail(
+			GSError.CODE_STATE,
 			"Too far from the flag (%.1f > %.1f)."
 				% [where.distance_to(at), def.flag_touch_radius]
 		)
@@ -136,19 +136,19 @@ func touch(key: String, presence: DotObjectivePresence) -> DotResult:
 	if team == home_team():
 		if state == State.DROPPED and def.flag_touch_returns:
 			_send_home(key)
-			return DotResult.success(&"returned")
-		return DotResult.fail(
-			DotError.CODE_STATE, "A team does not carry its own flag."
+			return GSResult.success(&"returned")
+		return GSResult.fail(
+			GSError.CODE_STATE, "A team does not carry its own flag."
 		)
 
 	if state == State.CARRIED:
-		return DotResult.fail(
-			DotError.CODE_STATE, "%s already has it." % carrier
+		return GSResult.fail(
+			GSError.CODE_STATE, "%s already has it." % carrier
 		)
 	if locked or not team_allowed(team):
-		return DotResult.fail(DotError.CODE_STATE, "This flag is not in play yet.")
+		return GSResult.fail(GSError.CODE_STATE, "This flag is not in play yet.")
 	if key == dropper and pickup_delay_left > 0:
-		return DotResult.fail(DotError.CODE_STATE, "Just dropped it; wait a moment.")
+		return GSResult.fail(GSError.CODE_STATE, "Just dropped it; wait a moment.")
 
 	state = State.CARRIED
 	carrier = key
@@ -159,13 +159,13 @@ func touch(key: String, presence: DotObjectivePresence) -> DotResult:
 	_last_fraction = -1.0
 	started.emit(team, key)
 	event.emit(&"taken", {"by": key, "team": team})
-	return DotResult.success(&"taken")
+	return GSResult.success(&"taken")
 
 
 ## The carrier died, disconnected, or dropped it deliberately.
-func drop(position: Vector3) -> DotResult:
+func drop(position: Vector3) -> GSResult:
 	if state != State.CARRIED:
-		return DotResult.fail(DotError.CODE_STATE, "Nobody is carrying it.")
+		return GSResult.fail(GSError.CODE_STATE, "Nobody is carrying it.")
 	var was := carrier
 	var team := _carrier_team
 	state = State.DROPPED
@@ -179,15 +179,15 @@ func drop(position: Vector3) -> DotResult:
 	_last_fraction = -1.0
 	interrupted.emit(team, &"dropped")
 	event.emit(&"dropped", {"by": was, "at": position, "returns_in": return_left})
-	return DotResult.success(null)
+	return GSResult.success(null)
 
 
 ## Put it back on its stand, by hand.
-func send_home(by: String = "") -> DotResult:
+func send_home(by: String = "") -> GSResult:
 	if state == State.HOME:
-		return DotResult.fail(DotError.CODE_STATE, "It is already home.")
+		return GSResult.fail(GSError.CODE_STATE, "It is already home.")
 	_send_home(by)
-	return DotResult.success(null)
+	return GSResult.success(null)
 
 
 func _send_home(by: String) -> void:
@@ -209,25 +209,25 @@ func _send_home(by: String) -> void:
 ## Public because a HUD has to be able to say "your flag is not at home" — a carrier
 ## standing on their own capture point with nothing happening and no explanation is
 ## the single most confusing state this mode has.
-func may_capture(other_flags: Array[DotObjectiveFlag]) -> DotResult:
+func may_capture(other_flags: Array[GSObjectiveFlag]) -> GSResult:
 	if state != State.CARRIED:
-		return DotResult.fail(DotError.CODE_STATE, "Nobody is carrying it.")
+		return GSResult.fail(GSError.CODE_STATE, "Nobody is carrying it.")
 	if not def.flag_requires_own_at_home:
-		return DotResult.success(null)
+		return GSResult.success(null)
 	for flag in other_flags:
 		if flag == null or flag == self:
 			continue
 		if flag.home_team() != _carrier_team:
 			continue
 		if not flag.is_home():
-			return DotResult.fail(
-				DotError.CODE_STATE,
+			return GSResult.fail(
+				GSError.CODE_STATE,
 				"Your own flag is not at home, so this one cannot be captured."
 			)
-	return DotResult.success(null)
+	return GSResult.success(null)
 
 
-func _advance(presence: DotObjectivePresence, _rules: DotObjectiveRules) -> void:
+func _advance(presence: GSObjectivePresence, _rules: GSObjectiveRules) -> void:
 	match state:
 		State.CARRIED:
 			if not presence.is_alive(carrier):
@@ -251,9 +251,9 @@ func _advance(presence: DotObjectivePresence, _rules: DotObjectiveRules) -> void
 
 ## Score it. The manager calls this when the carrier reaches the capture area and
 ## [method may_capture] agrees; it is separate so a game can add its own condition.
-func capture(by: String) -> DotResult:
+func capture(by: String) -> GSResult:
 	if state != State.CARRIED:
-		return DotResult.fail(DotError.CODE_STATE, "Nobody is carrying it.")
+		return GSResult.fail(GSError.CODE_STATE, "Nobody is carrying it.")
 	var team := _carrier_team
 	captures += 1
 	event.emit(&"captured", {"by": by, "team": team, "total": captures})
@@ -262,7 +262,7 @@ func capture(by: String) -> DotResult:
 		_complete(team, by)
 	else:
 		completed.emit(team, by)
-	return DotResult.success(team)
+	return GSResult.success(team)
 
 
 func _announce() -> void:

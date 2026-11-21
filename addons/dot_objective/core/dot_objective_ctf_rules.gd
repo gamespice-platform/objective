@@ -1,6 +1,6 @@
 @tool
-class_name DotObjectiveCtfRules
-extends DotConfig
+class_name GSObjectiveCtfRules
+extends GSConfig
 
 ## Every number capture-the-flag has, as one layered config (defaults < JSON < environment `DOT_CTF_*` < command line `--ctf-*`). A game maps its cvars onto these fields.
 
@@ -43,10 +43,10 @@ func cli_prefix() -> String:
 	return "--ctf-"
 
 
-func validate() -> DotResult:
+func validate() -> GSResult:
 	if touch_radius > stand_radius * 2.0:
-		return DotResult.fail(
-			DotError.CODE_INVALID,
+		return GSResult.fail(
+			GSError.CODE_INVALID,
 			"touch_radius %.1f is wider than two stands; the flag would be taken from across the map." % touch_radius
 		)
-	return DotResult.success(null)
+	return GSResult.success(null)

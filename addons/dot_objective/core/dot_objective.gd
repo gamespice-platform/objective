@@ -1,10 +1,10 @@
-class_name DotObjective
+class_name GSObjective
 extends RefCounted
 
 ## One objective, running. The definition is the document; this is what it is doing.
 ##
 ## [b]Counted in ticks and driven by one call.[/b] [method advance] is handed the
-## current tick and a [DotObjectivePresence], exactly like [method DotMatch.advance] —
+## current tick and a [GSObjectivePresence], exactly like [method GSMatch.advance] —
 ## no [code]_process[/code], no timers, no [SceneTree]. A [RefCounted] rather than a
 ## [Node] for the reason the family gives everywhere: a headless suite builds a
 ## hundred of these, a client mirrors them, and neither wants a scene tree.
@@ -41,7 +41,7 @@ enum Phase {
 	FAILED,     ## Done, badly. A bomb that went off on the defenders.
 }
 
-var def: DotObjectiveDef = null
+var def: GSObjectiveDef = null
 
 var phase: Phase = Phase.IDLE
 
@@ -52,7 +52,7 @@ var owner_team: int = 0
 ## The tick [method advance] was last given. Nothing here reads a wall clock.
 var tick: int = 0
 
-## Set by [DotObjectiveSet] when this objective is not in the round being played. A
+## Set by [GSObjectiveSet] when this objective is not in the round being played. A
 ## locked objective still advances — it has to, or a payload would keep the idle
 ## counter it should have stopped — but it refuses to start anything.
 var locked: bool = false
@@ -65,12 +65,12 @@ var locked: bool = false
 ## moment, is available to one side and not the other. A single [member locked]
 ## boolean cannot say that, and a mode built on one is a race rather than a tug of war.
 ##
-## [DotObjectiveSet] fills this in from [member DotObjectiveDef.requires_owned]. Unset
+## [GSObjectiveSet] fills this in from [member GSObjectiveDef.requires_owned]. Unset
 ## means every team may act.
 var team_gate: Callable = Callable()
 
 
-func _init(p_def: DotObjectiveDef = null) -> void:
+func _init(p_def: GSObjectiveDef = null) -> void:
 	def = p_def
 	if def != null:
 		owner_team = def.initial_team
@@ -92,8 +92,8 @@ func team_allowed(team: int) -> bool:
 	return true
 
 
-func kind() -> DotObjectiveDef.Kind:
-	return def.kind if def != null else DotObjectiveDef.Kind.CAPTURE
+func kind() -> GSObjectiveDef.Kind:
+	return def.kind if def != null else GSObjectiveDef.Kind.CAPTURE
 
 
 ## 0..1, for a HUD. What it measures differs per kind and every kind documents it.
@@ -113,7 +113,7 @@ func is_finished() -> bool:
 ## One tick. Never call [method _advance] directly: this is where the finished check
 ## and the tick stamp live, and a kind that skipped them would keep running after it
 ## had been won.
-func advance(p_tick: int, presence: DotObjectivePresence, rules: DotObjectiveRules) -> void:
+func advance(p_tick: int, presence: GSObjectivePresence, rules: GSObjectiveRules) -> void:
 	tick = p_tick
 	if is_finished():
 		return
@@ -124,7 +124,7 @@ func advance(p_tick: int, presence: DotObjectivePresence, rules: DotObjectiveRul
 
 
 ## Where a kind does its work.
-func _advance(_presence: DotObjectivePresence, _rules: DotObjectiveRules) -> void:
+func _advance(_presence: GSObjectivePresence, _rules: GSObjectiveRules) -> void:
 	pass
 
 
@@ -133,7 +133,7 @@ func _advance(_presence: DotObjectivePresence, _rules: DotObjectiveRules) -> voi
 ## The default is to give up any partial progress, which is right for every kind here:
 ## a capture half-made during a freeze is one nobody was allowed to make. A kind that
 ## wants to keep something across the boundary says so.
-func _on_not_live(_presence: DotObjectivePresence, _rules: DotObjectiveRules) -> void:
+func _on_not_live(_presence: GSObjectivePresence, _rules: GSObjectiveRules) -> void:
 	pass
 
 
@@ -196,7 +196,7 @@ func _apply_wire(_w: Dictionary) -> void:
 func describe() -> Dictionary:
 	return {
 		"id": String(id()),
-		"kind": DotObjectiveDef.Kind.keys()[kind()],
+		"kind": GSObjectiveDef.Kind.keys()[kind()],
 		"phase": Phase.keys()[phase],
 		"owner": owner_team,
 		"progress": progress(),
@@ -209,7 +209,7 @@ func describe_lines() -> PackedStringArray:
 	out.append(
 		"%s [%s] %s owner=%d %.0f%%" % [
 			id(),
-			DotObjectiveDef.Kind.keys()[kind()],
+			GSObjectiveDef.Kind.keys()[kind()],
 			Phase.keys()[phase],
 			owner_team,
 			progress() * 100.0,
@@ -220,7 +220,7 @@ func describe_lines() -> PackedStringArray:
 
 func _to_string() -> String:
 	return "%s(%s %s)" % [
-		get_script().get_global_name() if get_script() != null else "DotObjective",
+		get_script().get_global_name() if get_script() != null else "GSObjective",
 		id(),
 		Phase.keys()[phase],
 	]

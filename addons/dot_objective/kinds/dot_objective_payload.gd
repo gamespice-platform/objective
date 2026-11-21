@@ -1,14 +1,14 @@
-class_name DotObjectivePayload
-extends DotObjective
+class_name GSObjectivePayload
+extends GSObjective
 
 ## A cart pushed along a path. The class-based objective shooters' cart watcher,
 ## reduced to the part that is a rule rather than a brush entity.
 ##
-## [member DotObjective.progress] is the fraction of the path travelled, which is what
+## [member GSObjective.progress] is the fraction of the path travelled, which is what
 ## every payload HUD ever drawn shows.
 ##
 ## [b]The cart has no body and nothing here moves a node.[/b] It has a distance along
-## [member DotObjectiveDef.payload_path], and [method position] turns that into a
+## [member GSObjectiveDef.payload_path], and [method position] turns that into a
 ## point. A game draws whatever it likes there — an [AnimatableBody3D] on a path, a
 ## sprite, nothing at all in a headless test. The alternative, owning a physics object,
 ## would make this addon untestable and would put the authority for where the cart is
@@ -18,13 +18,13 @@ extends DotObjective
 ## speed, two at 0.77, three or more at 1.0. Those are hand-picked so a second pusher
 ## is clearly worth having and a fourth is clearly worth sending somewhere else; no
 ## smooth curve produces that shape, which is why the numbers are three exported
-## fields rather than an expression. See [DotObjectiveRules].
+## fields rather than an expression. See [GSObjectiveRules].
 ##
 ## [b]Three things move it besides pushing, and they are what make a payload map.[/b]
 ## A downhill segment rolls it forward on its own at full speed, so a defender who
 ## stops pushing at the top of a hill has still lost the hill. An uphill segment rolls
 ## it backwards when nobody is on it. And after
-## [member DotObjectiveDef.payload_recede_ticks] of nobody at all it starts receding
+## [member GSObjectiveDef.payload_recede_ticks] of nobody at all it starts receding
 ## anywhere, back to the last checkpoint it latched, which is what stops a stalemate
 ## being a draw.
 
@@ -48,7 +48,7 @@ var _last_fraction: float = -1.0
 var _total: float = 1.0
 
 
-func _init(p_def: DotObjectiveDef = null) -> void:
+func _init(p_def: GSObjectiveDef = null) -> void:
 	super(p_def)
 	if p_def != null:
 		_total = maxf(p_def.path_length(), 0.0001)
@@ -89,7 +89,7 @@ func is_receding() -> bool:
 
 
 ## Ticks of nobody pushing before it will start rolling back. Negative once it is.
-func idle_remaining(rules: DotObjectiveRules) -> int:
+func idle_remaining(rules: GSObjectiveRules) -> int:
 	var limit := def.payload_recede_ticks
 	if rules.overtime:
 		limit = rules.payload_recede_overtime_ticks
@@ -109,7 +109,7 @@ func _reset() -> void:
 	_last_fraction = -1.0
 
 
-func _on_not_live(_presence: DotObjectivePresence, _rules: DotObjectiveRules) -> void:
+func _on_not_live(_presence: GSObjectivePresence, _rules: GSObjectiveRules) -> void:
 	# It stops. It does not recede: a cart that rolls backwards through a round end has
 	# lost ground nobody was allowed to take, and the idle counter would have been
 	# running through a freeze time nobody could push in.
@@ -119,13 +119,13 @@ func _on_not_live(_presence: DotObjectivePresence, _rules: DotObjectiveRules) ->
 	_receding = false
 
 
-func _advance(presence: DotObjectivePresence, rules: DotObjectiveRules) -> void:
+func _advance(presence: GSObjectivePresence, rules: GSObjectiveRules) -> void:
 	var here := def.area.moved_to(position())
 	here.radius = def.payload_push_radius
 	var counts := presence.counts_in(here)
 
 	var team := pushing_team()
-	var pushing: DotObjectivePresence.Count = counts.get(team, null)
+	var pushing: GSObjectivePresence.Count = counts.get(team, null)
 	_pushers = pushing.cappers if pushing != null else 0
 	_pushing_team = team if _pushers > 0 else 0
 	_blocked = rules.payload_defenders_block and _defended(counts, team)
@@ -200,7 +200,7 @@ func _defended(counts: Dictionary, team: int) -> bool:
 	for other_id: Variant in counts.keys():
 		if int(other_id) == team:
 			continue
-		var c: DotObjectivePresence.Count = counts[other_id]
+		var c: GSObjectivePresence.Count = counts[other_id]
 		if c.cappers > 0 or c.blockers > 0:
 			return true
 	return false

@@ -1,4 +1,4 @@
-class_name DotObjectiveSet
+class_name GSObjectiveSet
 extends RefCounted
 
 ## The objectives of one map, in order, and the rules about which of them are in play.
@@ -15,7 +15,7 @@ extends RefCounted
 ## every implementation that tries ends up with a mode where a losing team can run past
 ## everything and win at the far end.
 
-var objectives: Array[DotObjective] = []
+var objectives: Array[GSObjective] = []
 
 var _by_id: Dictionary = {}
 
@@ -23,30 +23,30 @@ var _by_id: Dictionary = {}
 var _round: Array[StringName] = []
 
 
-static func build(defs: Array[DotObjectiveDef]) -> DotResult:
-	var built := DotObjectiveSet.new()
+static func build(defs: Array[GSObjectiveDef]) -> GSResult:
+	var built := GSObjectiveSet.new()
 	var res := built.rebuild(defs)
 	if not res.ok:
 		return res
-	return DotResult.success(built)
+	return GSResult.success(built)
 
 
-func rebuild(defs: Array[DotObjectiveDef]) -> DotResult:
+func rebuild(defs: Array[GSObjectiveDef]) -> GSResult:
 	objectives.clear()
 	_by_id.clear()
 	_round.clear()
 
 	for def in defs:
 		if def == null:
-			return DotResult.fail(
-				DotError.CODE_INVALID, "A null definition is in the objective list."
+			return GSResult.fail(
+				GSError.CODE_INVALID, "A null definition is in the objective list."
 			)
 		var res := def.validate()
 		if not res.ok:
 			return res
 		if _by_id.has(def.id):
-			return DotResult.fail(
-				DotError.CODE_INVALID,
+			return GSResult.fail(
+				GSError.CODE_INVALID,
 				(
 					"Two objectives are called '%s'. Ids are how a game, a HUD and a "
 					+ "wire form all refer to one thing, so a duplicate silently makes "
@@ -56,31 +56,31 @@ func rebuild(defs: Array[DotObjectiveDef]) -> DotResult:
 
 		var made := _make(def)
 		if made == null:
-			return DotResult.fail(
-				DotError.CODE_INTERNAL,
+			return GSResult.fail(
+				GSError.CODE_INTERNAL,
 				"No implementation for objective kind %s." % def.kind
 			)
 		objectives.append(made)
 		_by_id[def.id] = made
 
 	_wire()
-	return DotResult.success(null)
+	return GSResult.success(null)
 
 
-func _make(def: DotObjectiveDef) -> DotObjective:
+func _make(def: GSObjectiveDef) -> GSObjective:
 	match def.kind:
-		DotObjectiveDef.Kind.CAPTURE:
-			return DotObjectiveCapture.new(def)
-		DotObjectiveDef.Kind.BOMB:
-			return DotObjectiveBomb.new(def)
-		DotObjectiveDef.Kind.PAYLOAD:
-			return DotObjectivePayload.new(def)
-		DotObjectiveDef.Kind.FLAG:
-			return DotObjectiveFlag.new(def)
-		DotObjectiveDef.Kind.RESCUE:
-			return DotObjectiveRescue.new(def)
-		DotObjectiveDef.Kind.HOLDOUT:
-			return DotObjectiveHoldout.new(def)
+		GSObjectiveDef.Kind.CAPTURE:
+			return GSObjectiveCapture.new(def)
+		GSObjectiveDef.Kind.BOMB:
+			return GSObjectiveBomb.new(def)
+		GSObjectiveDef.Kind.PAYLOAD:
+			return GSObjectivePayload.new(def)
+		GSObjectiveDef.Kind.FLAG:
+			return GSObjectiveFlag.new(def)
+		GSObjectiveDef.Kind.RESCUE:
+			return GSObjectiveRescue.new(def)
+		GSObjectiveDef.Kind.HOLDOUT:
+			return GSObjectiveHoldout.new(def)
 	return null
 
 
@@ -98,15 +98,15 @@ func _wire() -> void:
 	for obj in objectives:
 		var def := obj.def
 		obj.team_gate = func(team: int) -> bool:
-			var owner_set: DotObjectiveSet = set_ref.get_ref()
+			var owner_set: GSObjectiveSet = set_ref.get_ref()
 			return owner_set == null or owner_set.owns_all(team, def.requires_owned_for(team))
 
-		if obj is DotObjectiveHoldout:
-			var holdout := obj as DotObjectiveHoldout
+		if obj is GSObjectiveHoldout:
+			var holdout := obj as GSObjectiveHoldout
 			if def.holdout_owner_of != &"":
 				holdout.linked = objective(def.holdout_owner_of)
 				if holdout.linked == null:
-					DotLog.warn(
+					GSLog.warn(
 						"objective",
 						(
 							"Holdout '%s' reads the owner of '%s', which is not in "
@@ -121,7 +121,7 @@ func _wire() -> void:
 ## the engine and by any code that reflects over an object. A script that overrides it
 ## with a different signature has broken every one of those callers, quietly, and the
 ## symptom appears somewhere else entirely.
-func objective(id: StringName) -> DotObjective:
+func objective(id: StringName) -> GSObjective:
 	return _by_id.get(id, null)
 
 
@@ -136,19 +136,19 @@ func ids() -> Array[StringName]:
 	return out
 
 
-func of_kind(kind: DotObjectiveDef.Kind) -> Array[DotObjective]:
-	var out: Array[DotObjective] = []
+func of_kind(kind: GSObjectiveDef.Kind) -> Array[GSObjective]:
+	var out: Array[GSObjective] = []
 	for obj in objectives:
 		if obj.kind() == kind:
 			out.append(obj)
 	return out
 
 
-func flags() -> Array[DotObjectiveFlag]:
-	var out: Array[DotObjectiveFlag] = []
+func flags() -> Array[GSObjectiveFlag]:
+	var out: Array[GSObjectiveFlag] = []
 	for obj in objectives:
-		if obj is DotObjectiveFlag:
-			out.append(obj as DotObjectiveFlag)
+		if obj is GSObjectiveFlag:
+			out.append(obj as GSObjectiveFlag)
 	return out
 
 
@@ -165,7 +165,7 @@ func owns_all(team: int, required: Array[StringName]) -> bool:
 			# is the safe answer and the warning is where it is noticed: silently
 			# allowing it turns a tug of war back into a race, which is exactly the
 			# failure this gate exists to prevent.
-			DotLog.warn(
+			GSLog.warn(
 				"objective",
 				"Prerequisite '%s' is not in this set; team %d is refused." % [id, team]
 			)
@@ -201,11 +201,11 @@ func owns_everything(team: int) -> bool:
 ##
 ## [param owners] pre-sets who holds what, which is what a round layout is for: the
 ## second round of a five-point map starts with each team already holding two.
-func set_round(ids: Array[StringName], owners: Dictionary = {}) -> DotResult:
+func set_round(ids: Array[StringName], owners: Dictionary = {}) -> GSResult:
 	for id in ids:
 		if not has(id):
-			return DotResult.fail(
-				DotError.CODE_INVALID,
+			return GSResult.fail(
+				GSError.CODE_INVALID,
 				"Round layout names '%s', which is not in this set." % id
 			)
 	_round = ids.duplicate()
@@ -215,7 +215,7 @@ func set_round(ids: Array[StringName], owners: Dictionary = {}) -> DotResult:
 		var obj := objective(StringName(str(id)))
 		if obj != null:
 			obj.owner_team = int(owners[id])
-	return DotResult.success(null)
+	return GSResult.success(null)
 
 
 func round_ids() -> Array[StringName]:

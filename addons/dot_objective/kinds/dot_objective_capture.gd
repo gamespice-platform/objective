@@ -1,7 +1,7 @@
-class_name DotObjectiveCapture
-extends DotObjective
+class_name GSObjectiveCapture
+extends GSObjective
 
-## A control point. [member DotObjective.progress] is how far the current capture is.
+## A control point. [member GSObjective.progress] is how far the current capture is.
 ##
 ## This is the long-standing capture-area think rewritten in ticks — the shape of it,
 ## and every one of its decisions, because between the class-based objective shooters,
@@ -13,10 +13,10 @@ extends DotObjective
 ##   H(n) = 1 + 1/2 + 1/3 … A second player is worth half a player, and a fifth is
 ##   worth a fifth, which is what stops a point being a headcount.
 ## - [b]Two teams at once pauses it[/b] (or breaks it — see
-##   [member DotObjectiveRules.block_style]), and the defender who did it gets credit
+##   [member GSObjectiveRules.block_style]), and the defender who did it gets credit
 ##   only if the capture was at least half done.
 ## - [b]An abandoned capture decays[/b] rather than snapping back, over
-##   [member DotObjectiveRules.deteriorate_ticks], six times faster in overtime.
+##   [member GSObjectiveRules.deteriorate_ticks], six times faster in overtime.
 ## - [b]A neutral point being taken by the wrong team runs backwards[/b], which is what
 ##   makes a contested neutral point a tug of war rather than a coin flip.
 ##
@@ -24,8 +24,8 @@ extends DotObjective
 ## total capture time is [code]capTime * 2 * requiredPlayers[/code], so a point whose
 ## map file says ten seconds takes twenty with one player and twenty-seven with two
 ## required. That is a trap in a field a mapper reads: the number in the document is
-## not the number on the clock. Here [member DotObjectiveDef.capture_ticks] means what
-## it says — the time with [member DotObjectiveDef.capture_required] cappers on it —
+## not the number on the clock. Here [member GSObjectiveDef.capture_ticks] means what
+## it says — the time with [member GSObjectiveDef.capture_required] cappers on it —
 ## and the total is scaled by H(required) so the curve above is unchanged. The suite
 ## checks both halves of that: the quoted count takes the quoted time, and each extra
 ## capper is worth 1/n.
@@ -53,7 +53,7 @@ var _recovery_until: int = 0
 var _last_fraction: float = -1.0
 
 
-func _init(p_def: DotObjectiveDef = null) -> void:
+func _init(p_def: GSObjectiveDef = null) -> void:
 	super(p_def)
 	_total = float(maxi(p_def.capture_ticks, 1)) if p_def != null else 1.0
 	_remaining = _total
@@ -113,14 +113,14 @@ func _reset() -> void:
 	_last_fraction = -1.0
 
 
-func _on_not_live(_presence: DotObjectivePresence, _rules: DotObjectiveRules) -> void:
+func _on_not_live(_presence: GSObjectivePresence, _rules: GSObjectiveRules) -> void:
 	# A capture made while the round was not live is one nobody was allowed to make,
 	# and freeze time is exactly when everybody is standing on everything.
 	if _capturing_team > 0:
 		_break(&"not_live")
 
 
-func _advance(presence: DotObjectivePresence, rules: DotObjectiveRules) -> void:
+func _advance(presence: GSObjectivePresence, rules: GSObjectiveRules) -> void:
 	var allowed := def.capturable_by
 	var counts := presence.counts_in(def.area, allowed)
 
@@ -130,7 +130,7 @@ func _advance(presence: DotObjectivePresence, rules: DotObjectiveRules) -> void:
 	var teams_present := 0
 	var team_in_zone := 0
 	for team_id: Variant in counts.keys():
-		var c: DotObjectivePresence.Count = counts[team_id]
+		var c: GSObjectivePresence.Count = counts[team_id]
 		if c.cappers > 0 or c.blockers > 0:
 			teams_present += 1
 			team_in_zone = int(team_id)
@@ -154,13 +154,13 @@ func _advance(presence: DotObjectivePresence, rules: DotObjectiveRules) -> void:
 		phase = Phase.ACTIVE
 
 	if team_in_zone == _capturing_team:
-		var count: DotObjectivePresence.Count = counts[team_in_zone]
+		var count: GSObjectivePresence.Count = counts[team_in_zone]
 		_remaining -= rate_for(count.cappers)
 	elif owner_team == 0 and team_in_zone > 0:
 		# A neutral point, and the team in the zone is not the one capturing it. The
 		# original runs the clock backwards rather than breaking, which is what makes a
 		# contested neutral point a tug of war: whoever is standing there is winning.
-		var other: DotObjectivePresence.Count = counts[team_in_zone]
+		var other: GSObjectivePresence.Count = counts[team_in_zone]
 		_remaining += rate_for(other.cappers)
 	else:
 		_remaining += rules.decay_per_tick(_total)
@@ -168,7 +168,7 @@ func _advance(presence: DotObjectivePresence, rules: DotObjectiveRules) -> void:
 	if _remaining <= 0.0:
 		var by := ""
 		if counts.has(_capturing_team):
-			by = (counts[_capturing_team] as DotObjectivePresence.Count).first
+			by = (counts[_capturing_team] as GSObjectivePresence.Count).first
 		var team := _capturing_team
 		_capturing_team = 0
 		_remaining = _total
@@ -188,7 +188,7 @@ func _advance(presence: DotObjectivePresence, rules: DotObjectiveRules) -> void:
 
 
 func _maybe_start(
-	counts: Dictionary, rules: DotObjectiveRules, teams_present: int
+	counts: Dictionary, rules: GSObjectiveRules, teams_present: int
 ) -> void:
 	if locked:
 		return
@@ -212,7 +212,7 @@ func _maybe_start(
 		if not team_allowed(team):
 			continue
 
-		var c: DotObjectivePresence.Count = counts[team]
+		var c: GSObjectivePresence.Count = counts[team]
 		if c.cappers <= 0:
 			continue
 		if c.cappers < def.capture_required_to_start:
@@ -239,7 +239,7 @@ func _total_for(_team: int) -> float:
 	return quoted * rate_for(def.capture_required)
 
 
-func _handle_contest(counts: Dictionary, rules: DotObjectiveRules) -> void:
+func _handle_contest(counts: Dictionary, rules: GSObjectiveRules) -> void:
 	if not _blocked:
 		_blocked = true
 		phase = Phase.CONTESTED
@@ -255,7 +255,7 @@ func _handle_contest(counts: Dictionary, rules: DotObjectiveRules) -> void:
 			var team := int(team_id)
 			if team == _capturing_team:
 				continue
-			var c: DotObjectivePresence.Count = counts[team]
+			var c: GSObjectivePresence.Count = counts[team]
 			if c.first == "":
 				continue
 			if int(_block_credit.get(c.first, -1)) == _attempt:

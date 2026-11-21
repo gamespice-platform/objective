@@ -1,10 +1,10 @@
 @tool
-class_name DotObjectiveDef
+class_name GSObjectiveDef
 extends Resource
 
 ## What a round is about, as a document a server can check without loading anything.
 ##
-## Same rule as [DotItem], [DotNpcDef] and [DotPropDef]: a definition is data, it
+## Same rule as [GSItem], [GSNpcDef] and [GSPropDef]: a definition is data, it
 ## validates against a schema before anything is built from it, and nothing in it
 ## names a scene. A server can therefore answer "is this map's objective layout legal"
 ## at boot, in a headless process, with no world loaded — which is the only moment
@@ -24,8 +24,8 @@ extends Resource
 ## HOLDOUT   own it, or survive, for N      koth_'s clock, and a finale's radio
 ## [/codeblock]
 ##
-## A game with none of these is a deathmatch, which is what [DotMatch] alone already
-## does. A game with two of them at once is a mode; that is [DotObjectiveSet]'s job,
+## A game with none of these is a deathmatch, which is what [GSMatch] alone already
+## does. A game with two of them at once is a mode; that is [GSObjectiveSet]'s job,
 ## not this one's.
 
 enum Kind {
@@ -47,8 +47,8 @@ enum Kind {
 ## A one-or-two character label, for a map overview that has no room for a name.
 @export var label: String = ""
 
-## Where it is. See [DotObjectiveArea] — no geometry, and 2D is the XZ plane.
-@export var area: DotObjectiveArea = null
+## Where it is. See [GSObjectiveArea] — no geometry, and 2D is the XZ plane.
+@export var area: GSObjectiveArea = null
 
 @export_group("Ownership")
 
@@ -103,7 +103,7 @@ enum Kind {
 @export_range(1, 32, 1) var capture_required_to_start: int = 1
 
 ## Cappers the capture time is quoted for. More than this is faster; see
-## [DotObjectiveCapture] for the diminishing-returns curve, which is the shipped one.
+## [GSObjectiveCapture] for the diminishing-returns curve, which is the shipped one.
 @export_range(1, 32, 1) var capture_required: int = 1
 
 ## Whether more cappers capture faster.
@@ -161,7 +161,7 @@ enum Kind {
 
 ## Where carrying it to scores. Falls back to [member area] when unset, which is the
 ## symmetric case: a flag captured where it stands is a king-of-the-hill flag.
-@export var flag_capture_area: DotObjectiveArea = null
+@export var flag_capture_area: GSObjectiveArea = null
 
 ## Ticks a dropped flag waits before going home by itself.
 @export_range(0, 1000000, 1) var flag_return_ticks: int = 960
@@ -196,7 +196,7 @@ enum Kind {
 @export var rescue_starts: PackedVector3Array = PackedVector3Array()
 
 ## Where they have to end up.
-@export var rescue_area: DotObjectiveArea = null
+@export var rescue_area: GSObjectiveArea = null
 
 ## How close a rescuer must be to pick one up.
 @export_range(0.1, 100.0, 0.1, "or_greater") var rescue_touch_radius: float = 2.0
@@ -229,9 +229,9 @@ enum Kind {
 
 
 static func capture(
-	p_id: StringName, p_area: DotObjectiveArea, p_ticks: int = 480
-) -> DotObjectiveDef:
-	var d := DotObjectiveDef.new()
+	p_id: StringName, p_area: GSObjectiveArea, p_ticks: int = 480
+) -> GSObjectiveDef:
+	var d := GSObjectiveDef.new()
 	d.id = p_id
 	d.kind = Kind.CAPTURE
 	d.display_name = String(p_id)
@@ -240,8 +240,8 @@ static func capture(
 	return d
 
 
-static func bomb(p_id: StringName, p_site: DotObjectiveArea) -> DotObjectiveDef:
-	var d := DotObjectiveDef.new()
+static func bomb(p_id: StringName, p_site: GSObjectiveArea) -> GSObjectiveDef:
+	var d := GSObjectiveDef.new()
 	d.id = p_id
 	d.kind = Kind.BOMB
 	d.display_name = String(p_id)
@@ -252,13 +252,13 @@ static func bomb(p_id: StringName, p_site: DotObjectiveArea) -> DotObjectiveDef:
 
 static func payload(
 	p_id: StringName, p_path: PackedVector3Array
-) -> DotObjectiveDef:
-	var d := DotObjectiveDef.new()
+) -> GSObjectiveDef:
+	var d := GSObjectiveDef.new()
 	d.id = p_id
 	d.kind = Kind.PAYLOAD
 	d.display_name = String(p_id)
 	d.payload_path = p_path
-	d.area = DotObjectiveArea.sphere(
+	d.area = GSObjectiveArea.sphere(
 		p_path[0] if p_path.size() > 0 else Vector3.ZERO, 3.0
 	)
 	d.wins_round = true
@@ -266,9 +266,9 @@ static func payload(
 
 
 static func flag(
-	p_id: StringName, p_home: DotObjectiveArea, p_team: int
-) -> DotObjectiveDef:
-	var d := DotObjectiveDef.new()
+	p_id: StringName, p_home: GSObjectiveArea, p_team: int
+) -> GSObjectiveDef:
+	var d := GSObjectiveDef.new()
 	d.id = p_id
 	d.kind = Kind.FLAG
 	d.display_name = String(p_id)
@@ -278,9 +278,9 @@ static func flag(
 
 
 static func rescue(
-	p_id: StringName, p_starts: PackedVector3Array, p_to: DotObjectiveArea
-) -> DotObjectiveDef:
-	var d := DotObjectiveDef.new()
+	p_id: StringName, p_starts: PackedVector3Array, p_to: GSObjectiveArea
+) -> GSObjectiveDef:
+	var d := GSObjectiveDef.new()
 	d.id = p_id
 	d.kind = Kind.RESCUE
 	d.display_name = String(p_id)
@@ -295,13 +295,13 @@ static func rescue(
 	return d
 
 
-static func holdout(p_id: StringName, p_ticks: int) -> DotObjectiveDef:
-	var d := DotObjectiveDef.new()
+static func holdout(p_id: StringName, p_ticks: int) -> GSObjectiveDef:
+	var d := GSObjectiveDef.new()
 	d.id = p_id
 	d.kind = Kind.HOLDOUT
 	d.display_name = String(p_id)
 	d.holdout_ticks = p_ticks
-	d.area = DotObjectiveArea.everywhere()
+	d.area = GSObjectiveArea.everywhere()
 	d.wins_round = true
 	return d
 
@@ -362,13 +362,13 @@ func point_at(distance: float) -> Vector3:
 	return payload_path[payload_path.size() - 1]
 
 
-func validate() -> DotResult:
+func validate() -> GSResult:
 	if String(id).strip_edges() == "":
-		return DotResult.fail(DotError.CODE_INVALID, "An objective needs an id.")
+		return GSResult.fail(GSError.CODE_INVALID, "An objective needs an id.")
 
 	if kind != Kind.PAYLOAD and kind != Kind.HOLDOUT and area == null:
-		return DotResult.fail(
-			DotError.CODE_INVALID,
+		return GSResult.fail(
+			GSError.CODE_INVALID,
 			"Objective '%s' has no area, and a %s happens somewhere."
 				% [id, Kind.keys()[kind]]
 		)
@@ -379,8 +379,8 @@ func validate() -> DotResult:
 			return res.wrap("objective '%s'" % id)
 
 	if capture_required_to_start > capture_required and kind == Kind.CAPTURE:
-		return DotResult.fail(
-			DotError.CODE_INVALID,
+		return GSResult.fail(
+			GSError.CODE_INVALID,
 			(
 				"Objective '%s' needs %d to start a capture it quotes for %d, so the "
 				+ "capture can start and then never be at full rate."
@@ -390,18 +390,18 @@ func validate() -> DotResult:
 	match kind:
 		Kind.PAYLOAD:
 			if payload_path.size() < 2:
-				return DotResult.fail(
-					DotError.CODE_INVALID,
+				return GSResult.fail(
+					GSError.CODE_INVALID,
 					"Payload '%s' needs at least two path points." % id
 				)
 			if payload_speed <= 0.0:
-				return DotResult.fail(
-					DotError.CODE_INVALID, "Payload '%s' has no speed." % id
+				return GSResult.fail(
+					GSError.CODE_INVALID, "Payload '%s' has no speed." % id
 				)
 			for d in payload_checkpoints:
 				if d < 0.0 or d > path_length():
-					return DotResult.fail(
-						DotError.CODE_INVALID,
+					return GSResult.fail(
+						GSError.CODE_INVALID,
 						(
 							"Payload '%s' has a checkpoint at %.1f, and its path is "
 							+ "%.1f long. A checkpoint past the end can never latch."
@@ -409,8 +409,8 @@ func validate() -> DotResult:
 					)
 		Kind.FLAG:
 			if initial_team <= 0:
-				return DotResult.fail(
-					DotError.CODE_INVALID,
+				return GSResult.fail(
+					GSError.CODE_INVALID,
 					(
 						"Flag '%s' belongs to no team. A flag nobody owns is one "
 						+ "nobody can steal."
@@ -418,16 +418,16 @@ func validate() -> DotResult:
 				)
 		Kind.RESCUE:
 			if rescue_followers.is_empty():
-				return DotResult.fail(
-					DotError.CODE_INVALID, "Rescue '%s' has nobody to rescue." % id
+				return GSResult.fail(
+					GSError.CODE_INVALID, "Rescue '%s' has nobody to rescue." % id
 				)
 			if rescue_area == null:
-				return DotResult.fail(
-					DotError.CODE_INVALID, "Rescue '%s' has nowhere to rescue to." % id
+				return GSResult.fail(
+					GSError.CODE_INVALID, "Rescue '%s' has nowhere to rescue to." % id
 				)
 			if rescue_required > rescue_followers.size():
-				return DotResult.fail(
-					DotError.CODE_INVALID,
+				return GSResult.fail(
+					GSError.CODE_INVALID,
 					(
 						"Rescue '%s' requires %d of %d followers, which can never be "
 						+ "met."
@@ -435,13 +435,13 @@ func validate() -> DotResult:
 				)
 		Kind.HOLDOUT:
 			if holdout_ticks <= 0:
-				return DotResult.fail(
-					DotError.CODE_INVALID, "Holdout '%s' is over before it starts." % id
+				return GSResult.fail(
+					GSError.CODE_INVALID, "Holdout '%s' is over before it starts." % id
 				)
 		_:
 			pass
 
-	return DotResult.success(null)
+	return GSResult.success(null)
 
 
 func describe() -> Dictionary:

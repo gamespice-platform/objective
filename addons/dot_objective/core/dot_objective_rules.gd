@@ -1,10 +1,10 @@
 @tool
-class_name DotObjectiveRules
-extends DotConfig
+class_name GSObjectiveRules
+extends GSConfig
 
 ## Every policy that is about objectives in general rather than about one of them.
 ##
-## Layered like every [DotConfig] here — exported defaults, then a JSON file, then the
+## Layered like every [GSConfig] here — exported defaults, then a JSON file, then the
 ## environment, then the command line — so a server can run a slower capture without an
 ## export, and a test can set one field and leave the other twenty alone.
 ##
@@ -86,7 +86,7 @@ extends DotConfig
 ## Completing an objective that says it wins the round emits rather than deciding.
 ##
 ## There is no other option and the setting is here to say so: this addon never ends a
-## round. [DotMatch] does, and it does not import this one either.
+## round. [GSMatch] does, and it does not import this one either.
 @export var announce_only: bool = true
 
 
@@ -98,17 +98,17 @@ func cli_prefix() -> String:
 	return "--objective-"
 
 
-func validate() -> DotResult:
+func validate() -> GSResult:
 	if payload_speed_one > payload_speed_two or payload_speed_two > payload_speed_three:
-		return DotResult.fail(
-			DotError.CODE_INVALID,
+		return GSResult.fail(
+			GSError.CODE_INVALID,
 			(
 				"Payload speeds must not decrease with more pushers (%.2f, %.2f, "
 				+ "%.2f): a second pusher that slows the cart is a mode nobody asked "
 				+ "for."
 			) % [payload_speed_one, payload_speed_two, payload_speed_three]
 		)
-	return DotResult.success(null)
+	return GSResult.success(null)
 
 
 ## The tick cost of one tick of decay, given the total capture time.

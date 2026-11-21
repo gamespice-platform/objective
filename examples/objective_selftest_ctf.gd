@@ -5,8 +5,8 @@ extends "res://examples/objective_selftest_bomb_payload_flag.gd"
 var _tick := 0
 
 
-func _ctf(world: World, rules: DotObjectiveCtfRules, bases: Dictionary) -> DotObjectiveCtf:
-	var c := DotObjectiveCtf.new()
+func _ctf(world: World, rules: GSObjectiveCtfRules, bases: Dictionary) -> GSObjectiveCtf:
+	var c := GSObjectiveCtf.new()
 	c.rules = rules
 	c.presence = world.presence()
 	c.tick_rate = RATE
@@ -17,7 +17,7 @@ func _ctf(world: World, rules: DotObjectiveCtfRules, bases: Dictionary) -> DotOb
 	return c
 
 
-func _run_ticks(c: DotObjectiveCtf, n: int) -> void:
+func _run_ticks(c: GSObjectiveCtf, n: int) -> void:
 	for i in n:
 		_tick += 1
 		c.advance(_tick)
@@ -32,7 +32,7 @@ func _test_ctf_flow() -> void:
 	var w := World.new()
 	w.add("a", 1, Vector3(-50, 0, 0))
 	w.add("b", 2, Vector3(50, 0, 0))
-	var c := _ctf(w, DotObjectiveCtfRules.new(), _two_bases())
+	var c := _ctf(w, GSObjectiveCtfRules.new(), _two_bases())
 	var seen: Array = []
 	c.captured.connect(func(t: int, by: String, total: int) -> void: seen.append([t, by, total]))
 	_run_ticks(c, 2)
@@ -64,7 +64,7 @@ func _test_ctf_flow() -> void:
 	w.kill("b")
 	c.player_died("b")
 	_run_ticks(c, 2)
-	_check(c.scores[1] == 1 and c.flag_of(1).state == DotObjectiveFlag.State.DROPPED, "b dies and drops team 1's flag; a still cannot score")
+	_check(c.scores[1] == 1 and c.flag_of(1).state == GSObjectiveFlag.State.DROPPED, "b dies and drops team 1's flag; a still cannot score")
 	w.move("d", c.flag_of(1).at)
 	_run_ticks(c, 2)
 	_check(c.flag_of(1).is_home(), "a team-mate returns it")
@@ -72,7 +72,7 @@ func _test_ctf_flow() -> void:
 	_check(c.scores[1] == 2, "and now a's capture goes through")
 	c.queue_free()
 
-	var rules := DotObjectiveCtfRules.new()
+	var rules := GSObjectiveCtfRules.new()
 	rules.require_home = false
 	var w2 := World.new()
 	w2.add("a", 1, Vector3(50, 0, 0))
@@ -88,7 +88,7 @@ func _test_ctf_flow() -> void:
 
 func _test_ctf_drop_and_return() -> void:
 	_section("ctf: dropping, picking up, returning")
-	var rules := DotObjectiveCtfRules.new()
+	var rules := GSObjectiveCtfRules.new()
 	rules.return_sec = 5
 	rules.drop_sec = 1
 	var w := World.new()
@@ -103,12 +103,12 @@ func _test_ctf_drop_and_return() -> void:
 	w.kill("a")
 	c.player_died("a")
 	var f := c.flag_of(2)
-	_check(f.state == DotObjectiveFlag.State.DROPPED and f.at.distance_to(Vector3(20, 0, 0)) < 1.0, "a carrier who dies drops it where they stood")
+	_check(f.state == GSObjectiveFlag.State.DROPPED and f.at.distance_to(Vector3(20, 0, 0)) < 1.0, "a carrier who dies drops it where they stood")
 	w.alive["a"] = true
 	_run_ticks(c, 2)
-	_check(f.state == DotObjectiveFlag.State.DROPPED, "the dropper cannot take it straight back")
+	_check(f.state == GSObjectiveFlag.State.DROPPED, "the dropper cannot take it straight back")
 	_run_ticks(c, RATE)
-	_check(f.state == DotObjectiveFlag.State.CARRIED and f.carrier == "a", "after the drop delay they can")
+	_check(f.state == GSObjectiveFlag.State.CARRIED and f.carrier == "a", "after the drop delay they can")
 	w.move("a", Vector3(10, 0, 0))
 	_run_ticks(c, 2)
 	c.player_left("a")
@@ -136,7 +136,7 @@ func _test_ctf_drop_and_return() -> void:
 	var f2 := c2.flag_of(2)
 	w2.move("b", f2.at)
 	_run_ticks(c2, 2)
-	_check(f2.state == DotObjectiveFlag.State.DROPPED, "with friendly_return off, touching changes nothing")
+	_check(f2.state == GSObjectiveFlag.State.DROPPED, "with friendly_return off, touching changes nothing")
 	_run_ticks(c2, 5 * RATE)
 	_check(f2.is_home(), "and the timer sends it home after return_sec")
 	c2.queue_free()
@@ -144,7 +144,7 @@ func _test_ctf_drop_and_return() -> void:
 
 func _test_ctf_limits() -> void:
 	_section("ctf: capture limit and time limit")
-	var rules := DotObjectiveCtfRules.new()
+	var rules := GSObjectiveCtfRules.new()
 	rules.capture_limit = 2
 	var w := World.new()
 	w.add("a", 1, Vector3(50, 0, 0))
@@ -166,7 +166,7 @@ func _test_ctf_limits() -> void:
 	_check(c.scores[1] == 0 and not c.finished and c.winner == 0, "reset_match starts afresh")
 	c.queue_free()
 
-	var timed := DotObjectiveCtfRules.new()
+	var timed := GSObjectiveCtfRules.new()
 	timed.capture_limit = 0
 	timed.time_limit_sec = 2
 	var w2 := World.new()
@@ -187,18 +187,18 @@ func _test_ctf_limits() -> void:
 	c2.advance(_tick + 1, false)
 	_check(c2.live_ticks == before, "the clock does not run while not live")
 	c2.queue_free()
-	_check(not DotObjectiveCtfRules.new().validate().ok == false, "default rules validate")
-	var bad := DotObjectiveCtfRules.new()
+	_check(not GSObjectiveCtfRules.new().validate().ok == false, "default rules validate")
+	var bad := GSObjectiveCtfRules.new()
 	bad.touch_radius = 90.0
 	_check(not bad.validate().ok, "an absurd touch radius is refused")
-	var lone := DotObjectiveCtf.new()
+	var lone := GSObjectiveCtf.new()
 	_check(not lone.setup({1: Vector3.ZERO}).ok, "one team is refused")
 	lone.free()
 
 
 func _test_ctf_three_teams() -> void:
 	_section("ctf: three teams")
-	var rules := DotObjectiveCtfRules.new()
+	var rules := GSObjectiveCtfRules.new()
 	rules.team_count = 3
 	rules.capture_limit = 2
 	var bases := {1: Vector3(-50, 0, 0), 2: Vector3(50, 0, 0), 3: Vector3(0, 0, 80)}
@@ -244,11 +244,11 @@ func _test_ctf_three_teams() -> void:
 
 func _test_ctf_wire() -> void:
 	_section("ctf: server authority and replication")
-	var rules := DotObjectiveCtfRules.new()
+	var rules := GSObjectiveCtfRules.new()
 	var w := World.new()
 	w.add("a", 1, Vector3(50, 0, 0))
 	var server := _ctf(w, rules, _two_bases())
-	var mirror := DotObjectiveCtf.new()
+	var mirror := GSObjectiveCtf.new()
 	mirror.rules = rules
 	mirror.authoritative = false
 	mirror.presence = w.presence()
@@ -257,7 +257,7 @@ func _test_ctf_wire() -> void:
 	_check(mirror.setup(_two_bases()).ok, "a mirror builds the same flags")
 	_run_ticks(server, 2)
 	mirror.apply_wire(JSON.parse_string(JSON.stringify(server.to_json_wire())))
-	_check(mirror.flag_of(2).state == DotObjectiveFlag.State.CARRIED and mirror.flag_of(2).carrier == "a", "the mirror shows the carrier, through JSON")
+	_check(mirror.flag_of(2).state == GSObjectiveFlag.State.CARRIED and mirror.flag_of(2).carrier == "a", "the mirror shows the carrier, through JSON")
 	var events: Array = []
 	mirror.flag_event.connect(func(t: int, what: StringName, _d: Dictionary) -> void: events.append([t, what]))
 	w.move("a", Vector3(-50, 0, 0))
@@ -267,7 +267,7 @@ func _test_ctf_wire() -> void:
 	w.move("a", Vector3(50, 0, 0))
 	for i in 5:
 		mirror.advance(_tick + i)
-	_check(mirror.flag_of(2).state == DotObjectiveFlag.State.HOME or mirror.carried_by("a") == null, "a mirror never simulates a touch")
+	_check(mirror.flag_of(2).state == GSObjectiveFlag.State.HOME or mirror.carried_by("a") == null, "a mirror never simulates a touch")
 	_check(events.is_empty(), "and raises no events of its own")
 	server.queue_free()
 	mirror.queue_free()

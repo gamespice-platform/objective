@@ -1,4 +1,4 @@
-class_name DotObjectivePresence
+class_name GSObjectivePresence
 extends RefCounted
 
 ## How an objective finds out who is standing on it.
@@ -7,7 +7,7 @@ extends RefCounted
 ## GameSpice Objective never imports GameSpice Match, GameSpice Combat, GameSpice Player Controller or GameSpice Net,
 ## and it must not: a control point is the same rule in a 3D shooter, a 2D arena and a
 ## headless test with a dictionary of positions in it. The alternative — asking a
-## [DotMatch] for its roster — would make every one of those a project that needs
+## [GSMatch] for its roster — would make every one of those a project that needs
 ## GameSpice Match installed to compile.
 ##
 ## The failure this shape has is the family's most repeated one, so it is checked
@@ -74,8 +74,8 @@ static func of(
 	p_position: Callable,
 	p_team: Callable,
 	p_alive: Callable
-) -> DotObjectivePresence:
-	var p := DotObjectivePresence.new()
+) -> GSObjectivePresence:
+	var p := GSObjectivePresence.new()
 	p.participants_fn = p_participants
 	p.position_fn = p_position
 	p.team_fn = p_team
@@ -83,7 +83,7 @@ static func of(
 	return p
 
 
-func validate() -> DotResult:
+func validate() -> GSResult:
 	var missing := PackedStringArray()
 	if not participants_fn.is_valid():
 		missing.append("participants_fn")
@@ -95,10 +95,10 @@ func validate() -> DotResult:
 		missing.append("alive_fn")
 
 	if missing.is_empty():
-		return DotResult.success(null)
+		return GSResult.success(null)
 
-	return DotResult.fail(
-		DotError.CODE_STATE,
+	return GSResult.fail(
+		GSError.CODE_STATE,
 		(
 			"The presence is missing %s. An unset Callable answers with a zero rather "
 			+ "than failing, and 'everybody is dead, at the origin, on no team' is a "
@@ -149,7 +149,7 @@ func may_block(key: String) -> bool:
 	return true
 
 
-func is_inside(key: String, area: DotObjectiveArea) -> bool:
+func is_inside(key: String, area: GSObjectiveArea) -> bool:
 	if area == null:
 		return false
 	return area.contains(position_of(key))
@@ -160,7 +160,7 @@ func is_inside(key: String, area: DotObjectiveArea) -> bool:
 ## Returns [code]{team_id: Count}[/code], and only for teams with somebody in it — an
 ## empty dictionary means an empty zone, which is the answer a caller wants to branch
 ## on without iterating every team that exists.
-func counts_in(area: DotObjectiveArea, allowed: PackedInt32Array = PackedInt32Array()) -> Dictionary:
+func counts_in(area: GSObjectiveArea, allowed: PackedInt32Array = PackedInt32Array()) -> Dictionary:
 	var out: Dictionary = {}
 	if area == null:
 		return out

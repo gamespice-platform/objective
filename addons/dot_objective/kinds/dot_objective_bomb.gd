@@ -1,16 +1,16 @@
-class_name DotObjectiveBomb
-extends DotObjective
+class_name GSObjectiveBomb
+extends GSObjective
 
 ## Plant it, defuse it. The round-based shooters' bomb, without the weapon.
 ##
-## [member DotObjective.progress] is the plant or the defuse while one is running, and
+## [member GSObjective.progress] is the plant or the defuse while one is running, and
 ## the fuse burning down once it is armed — which is the number a HUD wants in all
 ## three cases and the reason they share one field.
 ##
 ## [b]The bomb is not an item and this addon does not know what one is.[/b] A game
 ## gives it to somebody with [method give_to], drops it with [method drop_at] when that
 ## player dies, and hands it back with [method try_pick_up]. Whether that is a
-## [DotItem] in a [DotLoadout] slot, a prop, or a boolean on a player is the game's
+## [GSItem] in a [GSLoadout] slot, a prop, or a boolean on a player is the game's
 ## business; every one of those still needs the plant timer, the defuse race and the
 ## fuse, and none of them should be reimplementing it.
 ##
@@ -55,7 +55,7 @@ var _last_fraction: float = -1.0
 var _defusing_team: int = 0
 
 
-func _init(p_def: DotObjectiveDef = null) -> void:
+func _init(p_def: GSObjectiveDef = null) -> void:
 	super(p_def)
 	if p_def != null:
 		_fuse_left = float(p_def.bomb_fuse_ticks)
@@ -114,24 +114,24 @@ func _reset() -> void:
 
 
 ## Hand it to a player.
-func give_to(key: String) -> DotResult:
+func give_to(key: String) -> GSResult:
 	if is_armed() or is_finished():
-		return DotResult.fail(
-			DotError.CODE_STATE, "The bomb is already armed; it cannot be carried."
+		return GSResult.fail(
+			GSError.CODE_STATE, "The bomb is already armed; it cannot be carried."
 		)
 	carrier = key
 	state = State.HELD
 	_actor = ""
 	_actor_ticks = 0.0
 	event.emit(&"picked_up", {"by": key})
-	return DotResult.success(null)
+	return GSResult.success(null)
 
 
 ## Put it on the floor. What a game calls when the carrier dies or drops it.
-func drop_at(position: Vector3) -> DotResult:
+func drop_at(position: Vector3) -> GSResult:
 	if is_armed() or is_finished():
-		return DotResult.fail(
-			DotError.CODE_STATE, "An armed bomb is not carried and cannot be dropped."
+		return GSResult.fail(
+			GSError.CODE_STATE, "An armed bomb is not carried and cannot be dropped."
 		)
 	var was := carrier
 	carrier = ""
@@ -140,41 +140,41 @@ func drop_at(position: Vector3) -> DotResult:
 		_cancel_actor(&"plant_cancelled", &"dropped")
 	state = State.DROPPED
 	event.emit(&"dropped", {"by": was, "at": position})
-	return DotResult.success(null)
+	return GSResult.success(null)
 
 
-func try_pick_up(key: String, presence: DotObjectivePresence) -> DotResult:
+func try_pick_up(key: String, presence: GSObjectivePresence) -> GSResult:
 	if state != State.DROPPED:
-		return DotResult.fail(DotError.CODE_STATE, "The bomb is not on the floor.")
+		return GSResult.fail(GSError.CODE_STATE, "The bomb is not on the floor.")
 	if not presence.is_alive(key):
-		return DotResult.fail(DotError.CODE_STATE, "A dead player picks nothing up.")
+		return GSResult.fail(GSError.CODE_STATE, "A dead player picks nothing up.")
 	if presence.team_of(key) != attacking_team():
-		return DotResult.fail(
-			DotError.CODE_FORBIDDEN, "Only the planting side may carry the bomb."
+		return GSResult.fail(
+			GSError.CODE_FORBIDDEN, "Only the planting side may carry the bomb."
 		)
 	if presence.position_of(key).distance_to(at) > def.bomb_pickup_radius:
-		return DotResult.fail(
-			DotError.CODE_STATE,
+		return GSResult.fail(
+			GSError.CODE_STATE,
 			"Too far from the bomb (%.1f > %.1f)."
 				% [presence.position_of(key).distance_to(at), def.bomb_pickup_radius]
 		)
 	return give_to(key)
 
 
-func begin_plant(key: String, presence: DotObjectivePresence) -> DotResult:
+func begin_plant(key: String, presence: GSObjectivePresence) -> GSResult:
 	if state != State.HELD:
-		return DotResult.fail(DotError.CODE_STATE, "Nobody is carrying the bomb.")
+		return GSResult.fail(GSError.CODE_STATE, "Nobody is carrying the bomb.")
 	if carrier != key:
-		return DotResult.fail(DotError.CODE_FORBIDDEN, "%s is not carrying it." % key)
+		return GSResult.fail(GSError.CODE_FORBIDDEN, "%s is not carrying it." % key)
 	if locked or not team_allowed(attacking_team()):
-		return DotResult.fail(
-			DotError.CODE_STATE, "This site is not in play this round."
+		return GSResult.fail(
+			GSError.CODE_STATE, "This site is not in play this round."
 		)
 	if not presence.is_alive(key):
-		return DotResult.fail(DotError.CODE_STATE, "A dead player plants nothing.")
+		return GSResult.fail(GSError.CODE_STATE, "A dead player plants nothing.")
 	if not def.area.contains(presence.position_of(key)):
-		return DotResult.fail(
-			DotError.CODE_STATE, "Not inside bomb site '%s'." % def.id
+		return GSResult.fail(
+			GSError.CODE_STATE, "Not inside bomb site '%s'." % def.id
 		)
 
 	state = State.PLANTING
@@ -185,7 +185,7 @@ func begin_plant(key: String, presence: DotObjectivePresence) -> DotResult:
 	_last_fraction = -1.0
 	started.emit(attacking_team(), key)
 	event.emit(&"plant_started", {"by": key})
-	return DotResult.success(null)
+	return GSResult.success(null)
 
 
 func cancel_plant() -> void:
@@ -196,21 +196,21 @@ func cancel_plant() -> void:
 
 
 func begin_defuse(
-	key: String, presence: DotObjectivePresence, with_kit: bool = false
-) -> DotResult:
+	key: String, presence: GSObjectivePresence, with_kit: bool = false
+) -> GSResult:
 	if not is_armed():
-		return DotResult.fail(DotError.CODE_STATE, "The bomb is not armed.")
+		return GSResult.fail(GSError.CODE_STATE, "The bomb is not armed.")
 	if state == State.DEFUSING and _actor == key:
-		return DotResult.success(null)
+		return GSResult.success(null)
 	if not presence.is_alive(key):
-		return DotResult.fail(DotError.CODE_STATE, "A dead player defuses nothing.")
+		return GSResult.fail(GSError.CODE_STATE, "A dead player defuses nothing.")
 	if presence.team_of(key) == attacking_team():
-		return DotResult.fail(
-			DotError.CODE_FORBIDDEN, "The planting side does not defuse its own bomb."
+		return GSResult.fail(
+			GSError.CODE_FORBIDDEN, "The planting side does not defuse its own bomb."
 		)
 	if presence.position_of(key).distance_to(at) > def.bomb_defuse_radius:
-		return DotResult.fail(
-			DotError.CODE_STATE, "Too far from the bomb to defuse it."
+		return GSResult.fail(
+			GSError.CODE_STATE, "Too far from the bomb to defuse it."
 		)
 
 	state = State.DEFUSING
@@ -225,7 +225,7 @@ func begin_defuse(
 	_last_fraction = -1.0
 	started.emit(presence.team_of(key), key)
 	event.emit(&"defuse_started", {"by": key, "kit": with_kit})
-	return DotResult.success(null)
+	return GSResult.success(null)
 
 
 func cancel_defuse() -> void:
@@ -245,7 +245,7 @@ func _cancel_actor(what: StringName, reason: StringName) -> void:
 	interrupted.emit(progressing_team(), reason)
 
 
-func _on_not_live(_presence: DotObjectivePresence, _rules: DotObjectiveRules) -> void:
+func _on_not_live(_presence: GSObjectivePresence, _rules: GSObjectiveRules) -> void:
 	# A fuse that keeps burning through a round end detonates a bomb in a round that is
 	# already over, and scores it. It stops with everything else.
 	if state == State.PLANTING:
@@ -254,7 +254,7 @@ func _on_not_live(_presence: DotObjectivePresence, _rules: DotObjectiveRules) ->
 		cancel_defuse()
 
 
-func _advance(presence: DotObjectivePresence, _rules: DotObjectiveRules) -> void:
+func _advance(presence: GSObjectivePresence, _rules: GSObjectiveRules) -> void:
 	match state:
 		State.PLANTING:
 			if not _actor_still_valid(presence, def.area, 0.0):
@@ -288,7 +288,7 @@ func _advance(presence: DotObjectivePresence, _rules: DotObjectiveRules) -> void
 
 ## Alive, on the same side, and still where they were. Every tick, deliberately.
 func _actor_still_valid(
-	presence: DotObjectivePresence, area: DotObjectiveArea, radius: float
+	presence: GSObjectivePresence, area: GSObjectiveArea, radius: float
 ) -> bool:
 	if _actor == "":
 		return false

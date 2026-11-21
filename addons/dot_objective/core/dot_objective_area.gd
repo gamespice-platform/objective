@@ -1,5 +1,5 @@
 @tool
-class_name DotObjectiveArea
+class_name GSObjectiveArea
 extends Resource
 
 ## Where an objective happens, without any geometry.
@@ -47,8 +47,8 @@ enum Shape {
 @export var half_extents: Vector3 = Vector3(4.0, 2.5, 4.0)
 
 
-static func sphere(p_centre: Vector3, p_radius: float) -> DotObjectiveArea:
-	var a := DotObjectiveArea.new()
+static func sphere(p_centre: Vector3, p_radius: float) -> GSObjectiveArea:
+	var a := GSObjectiveArea.new()
 	a.shape = Shape.SPHERE
 	a.centre = p_centre
 	a.radius = p_radius
@@ -57,8 +57,8 @@ static func sphere(p_centre: Vector3, p_radius: float) -> DotObjectiveArea:
 
 static func cylinder(
 	p_centre: Vector3, p_radius: float, p_half_height: float = 2.5
-) -> DotObjectiveArea:
-	var a := DotObjectiveArea.new()
+) -> GSObjectiveArea:
+	var a := GSObjectiveArea.new()
 	a.shape = Shape.CYLINDER
 	a.centre = p_centre
 	a.radius = p_radius
@@ -66,16 +66,16 @@ static func cylinder(
 	return a
 
 
-static func box(p_centre: Vector3, p_half_extents: Vector3) -> DotObjectiveArea:
-	var a := DotObjectiveArea.new()
+static func box(p_centre: Vector3, p_half_extents: Vector3) -> GSObjectiveArea:
+	var a := GSObjectiveArea.new()
 	a.shape = Shape.BOX
 	a.centre = p_centre
 	a.half_extents = p_half_extents
 	return a
 
 
-static func everywhere() -> DotObjectiveArea:
-	var a := DotObjectiveArea.new()
+static func everywhere() -> GSObjectiveArea:
+	var a := GSObjectiveArea.new()
 	a.shape = Shape.EVERYWHERE
 	return a
 
@@ -85,8 +85,8 @@ static func everywhere() -> DotObjectiveArea:
 ## The height test is switched off rather than made huge, because "huge" is a number
 ## somebody eventually exceeds: a 2D game with a camera height, a parallax layer or a
 ## y of anything but zero would silently stop capturing.
-static func of_2d(p_centre: Vector2, p_radius: float) -> DotObjectiveArea:
-	var a := DotObjectiveArea.new()
+static func of_2d(p_centre: Vector2, p_radius: float) -> GSObjectiveArea:
+	var a := GSObjectiveArea.new()
 	a.shape = Shape.SPHERE
 	a.centre = Vector3(p_centre.x, 0.0, p_centre.y)
 	a.radius = p_radius
@@ -133,27 +133,27 @@ func contains_2d(point: Vector2) -> bool:
 ## A payload's push area follows the cart, and a caller that mutated [member centre]
 ## in place would be mutating a [Resource] the definition still holds — the aliasing
 ## this family has now found in five places. This returns a new one.
-func moved_to(p_centre: Vector3) -> DotObjectiveArea:
-	var a := duplicate() as DotObjectiveArea
+func moved_to(p_centre: Vector3) -> GSObjectiveArea:
+	var a := duplicate() as GSObjectiveArea
 	a.centre = p_centre
 	return a
 
 
-func validate() -> DotResult:
+func validate() -> GSResult:
 	match shape:
 		Shape.SPHERE, Shape.CYLINDER:
 			if radius <= 0.0:
-				return DotResult.fail(
-					DotError.CODE_INVALID, "An area with no radius contains nobody."
+				return GSResult.fail(
+					GSError.CODE_INVALID, "An area with no radius contains nobody."
 				)
 		Shape.BOX:
 			if half_extents.x <= 0.0 or half_extents.y <= 0.0 or half_extents.z <= 0.0:
-				return DotResult.fail(
-					DotError.CODE_INVALID, "A box with a zero extent contains nobody."
+				return GSResult.fail(
+					GSError.CODE_INVALID, "A box with a zero extent contains nobody."
 				)
 		_:
 			pass
-	return DotResult.success(null)
+	return GSResult.success(null)
 
 
 func describe() -> Dictionary:
@@ -167,4 +167,4 @@ func describe() -> Dictionary:
 
 
 func _to_string() -> String:
-	return "DotObjectiveArea(%s @ %v)" % [Shape.keys()[shape], centre]
+	return "GSObjectiveArea(%s @ %v)" % [Shape.keys()[shape], centre]

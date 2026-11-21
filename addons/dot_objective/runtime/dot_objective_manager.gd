@@ -1,12 +1,12 @@
-class_name DotObjectiveManager
+class_name GSObjectiveManager
 extends Node
 
 ## What a round is about, running. The one node a game holds.
 ##
 ## [codeblock]
-## var objectives := DotObjectiveManager.new()
+## var objectives := GSObjectiveManager.new()
 ## objectives.rules.live = false                 # warmup: nothing progresses
-## objectives.presence = DotObjectivePresence.of(
+## objectives.presence = GSObjectivePresence.of(
 ##     roster.keys_fn, world.position_of, match_node.team_of, world.is_alive
 ## )
 ## var res := objectives.setup(map.objectives)
@@ -22,7 +22,7 @@ extends Node
 ##
 ## [b]It never ends a round and never scores anything itself.[/b] It emits, and
 ## [member score_fn] hands a completion to whatever is keeping score —
-## [method DotMatch.report_objective] in every game here. GameSpice Objective does not import
+## [method GSMatch.report_objective] in every game here. GameSpice Objective does not import
 ## GameSpice Match, because a control point is the same rule in a game that has no match loop
 ## at all, and a hard dependency would make it one that could not compile there.
 
@@ -51,11 +51,11 @@ signal all_captured(team: int)
 ## to whatever its round loop is, and this addon does nothing else about it.
 signal round_objective_met(id: StringName, team: int, by: String)
 
-@export var rules: DotObjectiveRules = null
+@export var rules: GSObjectiveRules = null
 
 ## The objectives of the current map. Assigning this and calling [method setup] is the
 ## whole of loading a map's layout.
-@export var defs: Array[DotObjectiveDef] = []
+@export var defs: Array[GSObjectiveDef] = []
 
 ## Off on a client, which mirrors rather than simulating.
 ##
@@ -64,9 +64,9 @@ signal round_objective_met(id: StringName, team: int, by: String)
 ## then shows a point captured that the server has not captured.
 @export var authoritative: bool = true
 
-var presence: DotObjectivePresence = null
+var presence: GSObjectivePresence = null
 
-var objectives: DotObjectiveSet = null
+var objectives: GSObjectiveSet = null
 
 ## Where a completion goes to be scored.
 ## [code](id: StringName, team: int, by: String, team_points: int, player_points: int)[/code]
@@ -78,29 +78,29 @@ var _announced_sweep: int = 0
 
 func _init() -> void:
 	if rules == null:
-		rules = DotObjectiveRules.new()
+		rules = GSObjectiveRules.new()
 
 
 func _ready() -> void:
-	# A created DotNodeRef subsystem has already run _ready() by the time a host
+	# A created GSNodeRef subsystem has already run _ready() by the time a host
 	# assigns its config — this family lost GameSpice Server's audit log to exactly that.
-	# So _ready() builds nothing here; setup() is explicit and returns a DotResult.
+	# So _ready() builds nothing here; setup() is explicit and returns a GSResult.
 	if rules == null:
-		rules = DotObjectiveRules.new()
+		rules = GSObjectiveRules.new()
 
 
 ## Build the objectives for a map. Refuses rather than half-building.
-func setup(p_defs: Array[DotObjectiveDef] = []) -> DotResult:
+func setup(p_defs: Array[GSObjectiveDef] = []) -> GSResult:
 	if not p_defs.is_empty():
 		defs = p_defs
 	if rules == null:
-		rules = DotObjectiveRules.new()
+		rules = GSObjectiveRules.new()
 
 	var res := rules.validate()
 	if not res.ok:
 		return res.wrap("objective rules")
 
-	var built := DotObjectiveSet.build(defs)
+	var built := GSObjectiveSet.build(defs)
 	if not built.ok:
 		return built.wrap("objective set")
 
@@ -114,12 +114,12 @@ func setup(p_defs: Array[DotObjectiveDef] = []) -> DotResult:
 		if not pres.ok:
 			return pres.wrap("objective presence")
 
-	DotLog.info(
+	GSLog.info(
 		"objective",
 		"%d objectives ready" % objectives.objectives.size(),
 		{"ids": str(objectives.ids())}
 	)
-	return DotResult.success(null)
+	return GSResult.success(null)
 
 
 func _connect_all() -> void:
@@ -151,13 +151,13 @@ func _disconnect_all() -> void:
 				(sig as Signal).disconnect(connection["callable"])
 
 
-func _on_completed(id: StringName, obj: DotObjective, team: int, by: String) -> void:
+func _on_completed(id: StringName, obj: GSObjective, team: int, by: String) -> void:
 	objective_completed.emit(id, team, by)
 
 	if score_fn.is_valid() and team > 0:
 		score_fn.call(id, team, by, obj.def.score_points, obj.def.player_points)
 
-	if obj.def.wins_round and obj.phase == DotObjective.Phase.COMPLETE:
+	if obj.def.wins_round and obj.phase == GSObjective.Phase.COMPLETE:
 		round_objective_met.emit(id, team, by)
 
 	_check_sweep(team)
@@ -197,14 +197,14 @@ func advance(tick: int) -> void:
 
 
 ## A carrier standing on their capture point scores. Checked here rather than in
-## [DotObjectiveFlag] because the rule needs the other flags, and an objective that
+## [GSObjectiveFlag] because the rule needs the other flags, and an objective that
 ## goes looking for its siblings is one that cannot be tested on its own.
 func _check_flag_captures() -> void:
 	var flags := objectives.flags()
 	if flags.is_empty():
 		return
 	for flag in flags:
-		if flag.state != DotObjectiveFlag.State.CARRIED:
+		if flag.state != GSObjectiveFlag.State.CARRIED:
 			continue
 		var target := flag.capture_area_for(flag.progressing_team(), flags)
 		if target == null:
@@ -225,7 +225,7 @@ func reset_round() -> void:
 	_announced_sweep = 0
 
 
-func objective(id: StringName) -> DotObjective:
+func objective(id: StringName) -> GSObjective:
 	return objectives.objective(id) if objectives != null else null
 
 
@@ -252,7 +252,7 @@ func set_overtime(overtime: bool) -> void:
 ## Sent whole rather than as deltas, deliberately: the whole of a map's objective state
 ## is a few hundred bytes at twenty entities, it is sent a few times a second at most,
 ## and a delta scheme here would be a second replication system beside GameSpice Net's for no
-## measurable gain. A game that wants it in a [DotNetVar] can put this in one.
+## measurable gain. A game that wants it in a [GSNetVar] can put this in one.
 func to_wire() -> Dictionary:
 	var out := {"t": _tick, "o": []}
 	if objectives == null:
@@ -290,7 +290,7 @@ func describe() -> Dictionary:
 func describe_lines() -> PackedStringArray:
 	var out := PackedStringArray()
 	out.append(
-		"DotObjectiveManager %s tick=%d live=%s%s"
+		"GSObjectiveManager %s tick=%d live=%s%s"
 			% [
 				"authoritative" if authoritative else "mirroring",
 				_tick,

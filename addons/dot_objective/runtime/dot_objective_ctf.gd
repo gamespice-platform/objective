@@ -1,9 +1,9 @@
-class_name DotObjectiveCtf
+class_name GSObjectiveCtf
 extends Node
 
 ## Capture the flag for any number of teams: one flag per team on its stand, every other team may take it and score it at their own stand.
 ##
-## Owns a [DotObjectiveManager] holding the flags. The server calls [method advance] each tick and [method player_died] / [method player_left]; a client applies [method to_wire]. Scoring goes out through [signal captured] and the manager's `score_fn`; the match ends through [signal ended].
+## Owns a [GSObjectiveManager] holding the flags. The server calls [method advance] each tick and [method player_died] / [method player_left]; a client applies [method to_wire]. Scoring goes out through [signal captured] and the manager's `score_fn`; the match ends through [signal ended].
 
 signal captured(team: int, by: String, total: int)
 ## taken, dropped, returned, captured: a HUD and an announcer listen here. `team` is the flag's own team.
@@ -11,10 +11,10 @@ signal flag_event(team: int, what: StringName, data: Dictionary)
 ## `winner` 0 is a draw; `reason` is capture_limit or time_limit.
 signal ended(winner: int, reason: StringName)
 
-@export var rules: DotObjectiveCtfRules = null
+@export var rules: GSObjectiveCtfRules = null
 @export var authoritative: bool = true
-var presence: DotObjectivePresence = null
-var manager: DotObjectiveManager = null
+var presence: GSObjectivePresence = null
+var manager: GSObjectiveManager = null
 var tick_rate: int = 64
 ## team -> captures this match.
 var scores: Dictionary = {}
@@ -26,15 +26,15 @@ var live_ticks: int = 0
 
 ## Flag defs for [param bases] (team id -> Vector3), by the rules.
 static func defs_for(
-	bases: Dictionary, p_rules: DotObjectiveCtfRules, rate: int
-) -> Array[DotObjectiveDef]:
-	var out: Array[DotObjectiveDef] = []
+	bases: Dictionary, p_rules: GSObjectiveCtfRules, rate: int
+) -> Array[GSObjectiveDef]:
+	var out: Array[GSObjectiveDef] = []
 	var teams: Array = bases.keys()
 	teams.sort()
 	for t: int in teams:
-		var d := DotObjectiveDef.flag(
+		var d := GSObjectiveDef.flag(
 			StringName("flag_%d" % t),
-			DotObjectiveArea.sphere(bases[t], p_rules.stand_radius), t
+			GSObjectiveArea.sphere(bases[t], p_rules.stand_radius), t
 		)
 		d.display_name = "Team %d Flag" % t
 		d.label = str(t)
@@ -51,16 +51,16 @@ static func defs_for(
 
 
 ## Builds the flags. [param bases] is team id -> stand position; at least two teams.
-func setup(bases: Dictionary, p_score_fn: Callable = Callable()) -> DotResult:
+func setup(bases: Dictionary, p_score_fn: Callable = Callable()) -> GSResult:
 	if rules == null:
-		rules = DotObjectiveCtfRules.new()
+		rules = GSObjectiveCtfRules.new()
 	var ok := rules.validate()
 	if not ok.ok:
 		return ok.wrap("ctf rules")
 	if bases.size() < 2:
-		return DotResult.fail(DotError.CODE_INVALID, "Capture the flag needs a base for at least two teams.")
+		return GSResult.fail(GSError.CODE_INVALID, "Capture the flag needs a base for at least two teams.")
 	if manager == null:
-		manager = DotObjectiveManager.new()
+		manager = GSObjectiveManager.new()
 		manager.name = "FlagManager"
 		add_child(manager)
 		manager.objective_event.connect(_on_event)
@@ -71,7 +71,7 @@ func setup(bases: Dictionary, p_score_fn: Callable = Callable()) -> DotResult:
 	if not res.ok:
 		return res.wrap("ctf flags")
 	reset_match()
-	return DotResult.success(null)
+	return GSResult.success(null)
 
 
 ## A new match: scores, clock and flags back to the start.
@@ -86,13 +86,13 @@ func reset_match() -> void:
 		manager.reset_round()
 
 
-func flags() -> Array[DotObjectiveFlag]:
+func flags() -> Array[GSObjectiveFlag]:
 	if manager == null or manager.objectives == null:
 		return []
 	return manager.objectives.flags()
 
 
-func flag_of(team: int) -> DotObjectiveFlag:
+func flag_of(team: int) -> GSObjectiveFlag:
 	for f in flags():
 		if f.home_team() == team:
 			return f
@@ -100,13 +100,13 @@ func flag_of(team: int) -> DotObjectiveFlag:
 
 
 ## The flag [param key] is carrying, or null.
-func carried_by(key: String) -> DotObjectiveFlag:
+func carried_by(key: String) -> GSObjectiveFlag:
 	if manager == null or manager.objectives == null:
 		return null
 	# Walks the set in place: flags() allocates, and this runs per player per tick.
 	for obj in manager.objectives.objectives:
-		var f := obj as DotObjectiveFlag
-		if f != null and f.state == DotObjectiveFlag.State.CARRIED and f.carrier == key:
+		var f := obj as GSObjectiveFlag
+		if f != null and f.state == GSObjectiveFlag.State.CARRIED and f.carrier == key:
 			return f
 	return null
 
@@ -139,7 +139,7 @@ func _touch() -> void:
 	# picks a flag up adds its carrier below, so a carrier still takes no second flag.
 	var carrying := {}
 	for f in all:
-		if f.state == DotObjectiveFlag.State.CARRIED:
+		if f.state == GSObjectiveFlag.State.CARRIED:
 			carrying[f.carrier] = true
 	for f in all:
 		var reach := f.def.flag_touch_radius
@@ -149,7 +149,7 @@ func _touch() -> void:
 			if presence.position_of(key).distance_to(f.at) > reach:
 				continue
 			if f.touch(key, presence).ok:
-				if f.state == DotObjectiveFlag.State.CARRIED:
+				if f.state == GSObjectiveFlag.State.CARRIED:
 					carrying[f.carrier] = true
 				break
 
@@ -167,7 +167,7 @@ func player_left(key: String) -> void:
 
 
 func _on_event(id: StringName, what: StringName, data: Dictionary) -> void:
-	var f: DotObjectiveFlag = manager.objectives.objective(id) as DotObjectiveFlag
+	var f: GSObjectiveFlag = manager.objectives.objective(id) as GSObjectiveFlag
 	if f == null:
 		return
 	flag_event.emit(f.home_team(), what, data)
@@ -215,7 +215,7 @@ func hud_state() -> Dictionary:
 	var teams := {}
 	for f in flags():
 		teams[f.home_team()] = {
-			"state": DotObjectiveFlag.State.keys()[f.state],
+			"state": GSObjectiveFlag.State.keys()[f.state],
 			"carrier": f.carrier,
 			"returns_in": float(f.return_left) / float(tick_rate),
 			"captures": int(scores.get(f.home_team(), 0)),
@@ -269,7 +269,7 @@ func apply_wire(w: Dictionary) -> void:
 
 func describe_lines() -> PackedStringArray:
 	var out := PackedStringArray()
-	out.append("DotObjectiveCtf scores=%s winner=%d finished=%s" % [scores, winner, finished])
+	out.append("GSObjectiveCtf scores=%s winner=%d finished=%s" % [scores, winner, finished])
 	if manager != null:
 		out.append_array(manager.describe_lines())
 	return out

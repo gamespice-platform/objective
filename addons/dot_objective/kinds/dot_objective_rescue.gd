@@ -1,18 +1,18 @@
-class_name DotObjectiveRescue
-extends DotObjective
+class_name GSObjectiveRescue
+extends GSObjective
 
 ## Get somebody out. The round-based shooters' hostages, and every co-operative
 ## campaign's "escort the specialist to the lift".
 ##
-## [member DotObjective.progress] is how many have been rescued out of how many are
+## [member GSObjective.progress] is how many have been rescued out of how many are
 ## required, because that is the number on the HUD and the number the round ends on.
 ##
 ## [b]A follower's position is derived, never simulated.[/b] It trails its rescuer at
-## [member DotObjectiveDef.rescue_follow_distance] and that is all. This addon does not
+## [member GSObjectiveDef.rescue_follow_distance] and that is all. This addon does not
 ## own a navigation graph — GameSpice NPC does — and an escort system that pathfinds is one
 ## that cannot run in a headless suite, cannot run in 2D, and has quietly become a
 ## second, worse GameSpice NPC. A game that wants a hostage to walk round a corner properly
-## gives the follower a [DotNpcInstance] and moves it itself; the state machine here is
+## gives the follower a [GSNpcInstance] and moves it itself; the state machine here is
 ## still the one that says who is following whom and when they are safe.
 ##
 ## [b]The states are what a rescue mode actually has.[/b] Waiting where they started,
@@ -34,7 +34,7 @@ var _rescued: int = 0
 var _last_fraction: float = -1.0
 
 
-func _init(p_def: DotObjectiveDef = null) -> void:
+func _init(p_def: GSObjectiveDef = null) -> void:
 	super(p_def)
 	if p_def == null:
 		return
@@ -122,33 +122,33 @@ func _reset() -> void:
 
 
 ## Take one along. The rescuer has to be close enough, alive, and on the rescuing side.
-func take(id: StringName, key: String, presence: DotObjectivePresence) -> DotResult:
+func take(id: StringName, key: String, presence: GSObjectivePresence) -> GSResult:
 	var f: Variant = followers.get(id, null)
 	if f == null:
-		return DotResult.fail(DotError.CODE_INVALID, "No follower '%s' here." % id)
+		return GSResult.fail(GSError.CODE_INVALID, "No follower '%s' here." % id)
 	var entry := f as Dictionary
 	var state: int = int(entry["state"])
 	if state == Follower.RESCUED:
-		return DotResult.fail(DotError.CODE_STATE, "'%s' is already safe." % id)
+		return GSResult.fail(GSError.CODE_STATE, "'%s' is already safe." % id)
 	if state == Follower.LOST:
-		return DotResult.fail(DotError.CODE_STATE, "'%s' is not coming." % id)
+		return GSResult.fail(GSError.CODE_STATE, "'%s' is not coming." % id)
 	if locked or not team_allowed(presence.team_of(key)):
-		return DotResult.fail(DotError.CODE_STATE, "This rescue is not in play yet.")
+		return GSResult.fail(GSError.CODE_STATE, "This rescue is not in play yet.")
 	if not presence.is_alive(key):
-		return DotResult.fail(DotError.CODE_STATE, "A dead player rescues nobody.")
+		return GSResult.fail(GSError.CODE_STATE, "A dead player rescues nobody.")
 
 	var team := presence.team_of(key)
 	var want := progressing_team()
 	if want > 0 and team != want:
-		return DotResult.fail(
-			DotError.CODE_FORBIDDEN, "Only team %d may rescue here." % want
+		return GSResult.fail(
+			GSError.CODE_FORBIDDEN, "Only team %d may rescue here." % want
 		)
 
 	var where := presence.position_of(key)
 	var at: Vector3 = entry["at"]
 	if where.distance_to(at) > def.rescue_touch_radius:
-		return DotResult.fail(
-			DotError.CODE_STATE,
+		return GSResult.fail(
+			GSError.CODE_STATE,
 			"Too far from '%s' (%.1f > %.1f)."
 				% [id, where.distance_to(at), def.rescue_touch_radius]
 		)
@@ -159,31 +159,31 @@ func take(id: StringName, key: String, presence: DotObjectivePresence) -> DotRes
 		phase = Phase.ACTIVE
 		started.emit(team, key)
 	event.emit(&"following", {"follower": String(id), "by": key})
-	return DotResult.success(null)
+	return GSResult.success(null)
 
 
 ## Leave one where they are.
-func release(id: StringName) -> DotResult:
+func release(id: StringName) -> GSResult:
 	var f: Variant = followers.get(id, null)
 	if f == null:
-		return DotResult.fail(DotError.CODE_INVALID, "No follower '%s' here." % id)
+		return GSResult.fail(GSError.CODE_INVALID, "No follower '%s' here." % id)
 	var entry := f as Dictionary
 	if int(entry["state"]) != Follower.FOLLOWING:
-		return DotResult.fail(DotError.CODE_STATE, "'%s' is not following." % id)
+		return GSResult.fail(GSError.CODE_STATE, "'%s' is not following." % id)
 	entry["state"] = Follower.WAITING
 	entry["leader"] = ""
 	event.emit(&"released", {"follower": String(id)})
-	return DotResult.success(null)
+	return GSResult.success(null)
 
 
 ## One is dead.
-func lose(id: StringName, by: String = "") -> DotResult:
+func lose(id: StringName, by: String = "") -> GSResult:
 	var f: Variant = followers.get(id, null)
 	if f == null:
-		return DotResult.fail(DotError.CODE_INVALID, "No follower '%s' here." % id)
+		return GSResult.fail(GSError.CODE_INVALID, "No follower '%s' here." % id)
 	var entry := f as Dictionary
 	if int(entry["state"]) == Follower.RESCUED:
-		return DotResult.fail(DotError.CODE_STATE, "'%s' is already safe." % id)
+		return GSResult.fail(GSError.CODE_STATE, "'%s' is already safe." % id)
 	entry["state"] = Follower.LOST
 	entry["leader"] = ""
 	event.emit(&"lost", {"follower": String(id), "by": by})
@@ -194,10 +194,10 @@ func lose(id: StringName, by: String = "") -> DotResult:
 		# its time limit with nothing happening and no explanation.
 		event.emit(&"impossible", {"remaining": remaining_possible()})
 		_complete(0, "", true)
-	return DotResult.success(null)
+	return GSResult.success(null)
 
 
-func _advance(presence: DotObjectivePresence, _rules: DotObjectiveRules) -> void:
+func _advance(presence: GSObjectivePresence, _rules: GSObjectiveRules) -> void:
 	for id: Variant in followers.keys():
 		var entry := followers[id] as Dictionary
 		if int(entry["state"]) != Follower.FOLLOWING:

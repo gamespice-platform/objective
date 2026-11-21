@@ -5,7 +5,7 @@ extends "res://examples/objective_selftest_base.gd"
 func _test_area() -> void:
 	_section("areas")
 
-	var sphere := DotObjectiveArea.sphere(Vector3.ZERO, 5.0)
+	var sphere := GSObjectiveArea.sphere(Vector3.ZERO, 5.0)
 	_check(sphere.contains(Vector3(4.0, 0.0, 0.0)), "a sphere contains a near point")
 	_check(
 		sphere.contains(Vector3(0.0, 4.9, 0.0)),
@@ -13,23 +13,23 @@ func _test_area() -> void:
 	)
 	_check(not sphere.contains(Vector3(6.0, 0.0, 0.0)), "and not a far one")
 
-	var cyl := DotObjectiveArea.cylinder(Vector3.ZERO, 5.0, 2.0)
+	var cyl := GSObjectiveArea.cylinder(Vector3.ZERO, 5.0, 2.0)
 	_check(cyl.contains(Vector3(4.0, 1.5, 0.0)), "a cylinder contains a near point")
 	_check(
 		not cyl.contains(Vector3(0.0, 8.0, 0.0)),
 		"and refuses the player on the balcony, which is the whole reason it is not a sphere"
 	)
 
-	var box := DotObjectiveArea.box(Vector3(10, 0, 10), Vector3(2, 2, 2))
+	var box := GSObjectiveArea.box(Vector3(10, 0, 10), Vector3(2, 2, 2))
 	_check(box.contains(Vector3(11, 1, 9)), "a box contains a point inside it")
 	_check(not box.contains(Vector3(13, 0, 10)), "and not one outside it")
 
 	_check(
-		DotObjectiveArea.everywhere().contains(Vector3(1e6, -1e6, 0.0)),
+		GSObjectiveArea.everywhere().contains(Vector3(1e6, -1e6, 0.0)),
 		"everywhere contains everywhere"
 	)
 
-	var flat := DotObjectiveArea.of_2d(Vector2(3.0, 4.0), 2.0)
+	var flat := GSObjectiveArea.of_2d(Vector2(3.0, 4.0), 2.0)
 	_check(
 		flat.contains_2d(Vector2(4.0, 4.0)),
 		"a 2D area contains a 2D point, on the XZ plane dot-npc settled on"
@@ -49,20 +49,20 @@ func _test_area() -> void:
 func _test_def_validation() -> void:
 	_section("definition validation")
 
-	var ok := DotObjectiveDef.capture(&"mid", DotObjectiveArea.cylinder(Vector3.ZERO, 4.0))
+	var ok := GSObjectiveDef.capture(&"mid", GSObjectiveArea.cylinder(Vector3.ZERO, 4.0))
 	_check(ok.validate().ok, "a well-formed capture validates")
 
-	var no_id := DotObjectiveDef.new()
+	var no_id := GSObjectiveDef.new()
 	_check(not no_id.validate().ok, "one with no id does not")
 
-	var no_area := DotObjectiveDef.new()
+	var no_area := GSObjectiveDef.new()
 	no_area.id = &"x"
 	_check(
 		not no_area.validate().ok,
 		"nor does one with nowhere to happen"
 	)
 
-	var bad_start := DotObjectiveDef.capture(&"a", DotObjectiveArea.sphere(Vector3.ZERO, 3.0))
+	var bad_start := GSObjectiveDef.capture(&"a", GSObjectiveArea.sphere(Vector3.ZERO, 3.0))
 	bad_start.capture_required_to_start = 3
 	bad_start.capture_required = 1
 	_check(
@@ -70,7 +70,7 @@ func _test_def_validation() -> void:
 		"a point needing more to start than it is quoted for is refused"
 	)
 
-	var payload := DotObjectiveDef.payload(
+	var payload := GSObjectiveDef.payload(
 		&"cart", PackedVector3Array([Vector3.ZERO, Vector3(10, 0, 0)])
 	)
 	_check(payload.validate().ok, "a two-point payload validates")
@@ -82,19 +82,19 @@ func _test_def_validation() -> void:
 		"a checkpoint past the end of the path is refused, because it can never latch"
 	)
 
-	var short_path := DotObjectiveDef.payload(&"c", PackedVector3Array([Vector3.ZERO]))
+	var short_path := GSObjectiveDef.payload(&"c", PackedVector3Array([Vector3.ZERO]))
 	_check(not short_path.validate().ok, "a one-point path is not a path")
 
-	var flag := DotObjectiveDef.flag(&"f", DotObjectiveArea.sphere(Vector3.ZERO, 2.0), 0)
+	var flag := GSObjectiveDef.flag(&"f", GSObjectiveArea.sphere(Vector3.ZERO, 2.0), 0)
 	_check(
 		not flag.validate().ok,
 		"a flag belonging to nobody is refused: nobody can steal it"
 	)
 
-	var rescue := DotObjectiveDef.rescue(
+	var rescue := GSObjectiveDef.rescue(
 		&"h",
 		PackedVector3Array([Vector3.ZERO, Vector3(1, 0, 0)]),
-		DotObjectiveArea.sphere(Vector3(20, 0, 0), 3.0)
+		GSObjectiveArea.sphere(Vector3(20, 0, 0), 3.0)
 	)
 	_check(rescue.validate().ok, "a rescue with two followers validates")
 	rescue.rescue_required = 5
@@ -103,7 +103,7 @@ func _test_def_validation() -> void:
 		"and requiring more than exist is refused rather than being unwinnable"
 	)
 
-	var path := DotObjectiveDef.payload(
+	var path := GSObjectiveDef.payload(
 		&"p", PackedVector3Array([Vector3.ZERO, Vector3(10, 0, 0), Vector3(10, 0, 10)])
 	)
 	_check(
@@ -114,7 +114,7 @@ func _test_def_validation() -> void:
 	_check(path.gradient_at(15.0) == -1, "and the gradient of that segment")
 	_check(path.gradient_at(2.0) == 0, "and of the first one")
 
-	var duped := DotObjectiveDef.capture(&"g", DotObjectiveArea.sphere(Vector3.ZERO, 2.0))
+	var duped := GSObjectiveDef.capture(&"g", GSObjectiveArea.sphere(Vector3.ZERO, 2.0))
 	duped.requires_owned = {1: [&"first"]}
 	var got := duped.requires_owned_for(1)
 	got.append(&"injected")
@@ -128,7 +128,7 @@ func _test_def_validation() -> void:
 func _test_rules() -> void:
 	_section("rules")
 
-	var rules := DotObjectiveRules.new()
+	var rules := GSObjectiveRules.new()
 	_check(rules.validate().ok, "the defaults validate")
 	_check(not rules.live, "and are not live, because warmup is when everybody stands on everything")
 
@@ -157,7 +157,7 @@ func _test_rules() -> void:
 func _test_presence() -> void:
 	_section("presence")
 
-	var empty := DotObjectivePresence.new()
+	var empty := GSObjectivePresence.new()
 	var res := empty.validate()
 	_check(not res.ok, "a presence with no callables is refused")
 	_check(
@@ -176,15 +176,15 @@ func _test_presence() -> void:
 	var p := world.presence()
 	_check(p.validate().ok, "a wired one is accepted")
 
-	var area := DotObjectiveArea.cylinder(Vector3.ZERO, 5.0, 3.0)
+	var area := GSObjectiveArea.cylinder(Vector3.ZERO, 5.0, 3.0)
 	var counts := p.counts_in(area)
 	_check(counts.size() == 2, "two teams are in the zone")
 	_check(
-		(counts[1] as DotObjectivePresence.Count).cappers == 1,
+		(counts[1] as GSObjectivePresence.Count).cappers == 1,
 		"a dead player in the zone counts for nothing, which is the oldest bug in this genre"
 	)
 	_check(
-		(counts[2] as DotObjectivePresence.Count).cappers == 1,
+		(counts[2] as GSObjectivePresence.Count).cappers == 1,
 		"and the other team has its one"
 	)
 	_check(
@@ -195,7 +195,7 @@ func _test_presence() -> void:
 	world.values["a"] = 2
 	counts = p.counts_in(area)
 	_check(
-		(counts[1] as DotObjectivePresence.Count).cappers == 2,
+		(counts[1] as GSObjectivePresence.Count).cappers == 2,
 		"a capture value of two counts as two players"
 	)
 	world.values.erase("a")
@@ -203,8 +203,8 @@ func _test_presence() -> void:
 	world.can_capture["a"] = false
 	counts = p.counts_in(area)
 	_check(
-		(counts[1] as DotObjectivePresence.Count).cappers == 0
-		and (counts[1] as DotObjectivePresence.Count).blockers == 1,
+		(counts[1] as GSObjectivePresence.Count).cappers == 0
+		and (counts[1] as GSObjectivePresence.Count).blockers == 1,
 		"somebody who may not capture still blocks — the invulnerable player"
 	)
 	world.can_capture.erase("a")
@@ -219,11 +219,11 @@ func _test_presence() -> void:
 
 func _capture_world(radius: float = 5.0) -> Array:
 	var world := World.new()
-	var def := DotObjectiveDef.capture(
-		&"mid", DotObjectiveArea.cylinder(Vector3.ZERO, radius, 3.0), 6 * RATE
+	var def := GSObjectiveDef.capture(
+		&"mid", GSObjectiveArea.cylinder(Vector3.ZERO, radius, 3.0), 6 * RATE
 	)
-	var obj := DotObjectiveCapture.new(def)
-	var rules := DotObjectiveRules.new()
+	var obj := GSObjectiveCapture.new(def)
+	var rules := GSObjectiveRules.new()
 	rules.live = true
 	return [world, obj, rules]
 
@@ -233,8 +233,8 @@ func _test_capture_basic() -> void:
 
 	var bits := _capture_world()
 	var world: World = bits[0]
-	var obj: DotObjectiveCapture = bits[1]
-	var rules: DotObjectiveRules = bits[2]
+	var obj: GSObjectiveCapture = bits[1]
+	var rules: GSObjectiveRules = bits[2]
 	var p := world.presence()
 
 	world.add("red", 1, Vector3(1, 0, 1))
@@ -266,13 +266,13 @@ func _test_capture_basic() -> void:
 func _test_capture_curve() -> void:
 	_section("capture: diminishing returns")
 
-	_check(is_equal_approx(DotObjectiveCapture.rate_for(1), 1.0), "one capper is worth 1")
-	_check(is_equal_approx(DotObjectiveCapture.rate_for(2), 1.5), "two are worth 1.5")
+	_check(is_equal_approx(GSObjectiveCapture.rate_for(1), 1.0), "one capper is worth 1")
+	_check(is_equal_approx(GSObjectiveCapture.rate_for(2), 1.5), "two are worth 1.5")
 	_check(
-		is_equal_approx(DotObjectiveCapture.rate_for(3), 1.0 + 0.5 + 1.0 / 3.0),
+		is_equal_approx(GSObjectiveCapture.rate_for(3), 1.0 + 0.5 + 1.0 / 3.0),
 		"three are worth 1 + 1/2 + 1/3"
 	)
-	_check(DotObjectiveCapture.rate_for(0) == 0.0, "nobody is worth nothing")
+	_check(GSObjectiveCapture.rate_for(0) == 0.0, "nobody is worth nothing")
 
 	var one := _time_to_capture(1)
 	var two := _time_to_capture(2)
@@ -297,8 +297,8 @@ func _test_capture_curve() -> void:
 func _time_to_capture(cappers: int) -> int:
 	var bits := _capture_world()
 	var world: World = bits[0]
-	var obj: DotObjectiveCapture = bits[1]
-	var rules: DotObjectiveRules = bits[2]
+	var obj: GSObjectiveCapture = bits[1]
+	var rules: GSObjectiveRules = bits[2]
 	for i in range(cappers):
 		world.add("red%d" % i, 1, Vector3(float(i) * 0.5, 0, 0))
 	var p := world.presence()
@@ -314,8 +314,8 @@ func _test_capture_blocking() -> void:
 
 	var bits := _capture_world()
 	var world: World = bits[0]
-	var obj: DotObjectiveCapture = bits[1]
-	var rules: DotObjectiveRules = bits[2]
+	var obj: GSObjectiveCapture = bits[1]
+	var rules: GSObjectiveRules = bits[2]
 	world.add("red", 1, Vector3(1, 0, 0))
 	world.add("blue", 2, Vector3(200, 0, 0))
 	var p := world.presence()
@@ -335,7 +335,7 @@ func _test_capture_blocking() -> void:
 		"and with block_style 1 it is paused, not undone (%.3f against %.3f)"
 			% [obj.progress(), half]
 	)
-	_check(obj.phase == DotObjective.Phase.CONTESTED, "the phase says contested")
+	_check(obj.phase == GSObjective.Phase.CONTESTED, "the phase says contested")
 
 	world.move("blue", Vector3(200, 0, 0))
 	obj.advance(RATE * 3, p, rules)
@@ -344,8 +344,8 @@ func _test_capture_blocking() -> void:
 	# The other style, which is the older behaviour and what some modes want.
 	var bits2 := _capture_world()
 	var w2: World = bits2[0]
-	var o2: DotObjectiveCapture = bits2[1]
-	var r2: DotObjectiveRules = bits2[2]
+	var o2: GSObjectiveCapture = bits2[1]
+	var r2: GSObjectiveRules = bits2[2]
 	r2.block_style = 0
 	w2.add("red", 1, Vector3(1, 0, 0))
 	w2.add("blue", 2, Vector3(1, 0, 1))
@@ -366,8 +366,8 @@ func _test_capture_recovery() -> void:
 	# restarts immediately, because restarting immediately is what the original does.
 	var bits := _capture_world()
 	var world: World = bits[0]
-	var obj: DotObjectiveCapture = bits[1]
-	var rules: DotObjectiveRules = bits[2]
+	var obj: GSObjectiveCapture = bits[1]
+	var rules: GSObjectiveRules = bits[2]
 	rules.block_style = 0
 	rules.capture_recovery_ticks = 3 * RATE
 
@@ -413,8 +413,8 @@ func _test_capture_recovery() -> void:
 	# Zero, the default, is the original: a break is over the moment it happens.
 	var bits2 := _capture_world()
 	var w2: World = bits2[0]
-	var o2: DotObjectiveCapture = bits2[1]
-	var r2: DotObjectiveRules = bits2[2]
+	var o2: GSObjectiveCapture = bits2[1]
+	var r2: GSObjectiveRules = bits2[2]
 	r2.block_style = 0
 	w2.add("red", 1, Vector3(1, 0, 0))
 	w2.add("blue", 2, Vector3(1, 0, 1))
@@ -431,8 +431,8 @@ func _test_capture_decay() -> void:
 
 	var bits := _capture_world()
 	var world: World = bits[0]
-	var obj: DotObjectiveCapture = bits[1]
-	var rules: DotObjectiveRules = bits[2]
+	var obj: GSObjectiveCapture = bits[1]
+	var rules: GSObjectiveRules = bits[2]
 	world.add("red", 1, Vector3(1, 0, 0))
 	var p := world.presence()
 
@@ -462,8 +462,8 @@ func _test_capture_decay() -> void:
 	# standing on it, runs backwards rather than breaking.
 	var bits2 := _capture_world()
 	var w2: World = bits2[0]
-	var o2: DotObjectiveCapture = bits2[1]
-	var r2: DotObjectiveRules = bits2[2]
+	var o2: GSObjectiveCapture = bits2[1]
+	var r2: GSObjectiveRules = bits2[2]
 	r2.block_style = 1
 	w2.add("red", 1, Vector3(1, 0, 0))
 	var p2 := w2.presence()
@@ -485,8 +485,8 @@ func _test_capture_block_credit() -> void:
 
 	var bits := _capture_world()
 	var world: World = bits[0]
-	var obj: DotObjectiveCapture = bits[1]
-	var rules: DotObjectiveRules = bits[2]
+	var obj: GSObjectiveCapture = bits[1]
+	var rules: GSObjectiveRules = bits[2]
 	world.add("red", 1, Vector3(1, 0, 0))
 	world.add("blue", 2, Vector3(400, 0, 0))
 	var p := world.presence()

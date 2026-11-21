@@ -3,7 +3,7 @@ extends "res://examples/objective_selftest_ctf.gd"
 ## The suite: runs every section from the parts above and checks the totals.
 
 func _ready() -> void:
-	DotLog.set_level(DotLog.Level.ERROR)
+	GSLog.set_level(GSLog.Level.ERROR)
 	_run()
 
 
@@ -65,32 +65,32 @@ func _test_set_gating() -> void:
 
 	# A three-point map: red's, the middle, blue's. Neither side may reach the far
 	# point without owning the middle.
-	var red_pt := DotObjectiveDef.capture(
-		&"red_point", DotObjectiveArea.cylinder(Vector3(-50, 0, 0), 5.0), RATE
+	var red_pt := GSObjectiveDef.capture(
+		&"red_point", GSObjectiveArea.cylinder(Vector3(-50, 0, 0), 5.0), RATE
 	)
 	red_pt.initial_team = 1
-	var mid := DotObjectiveDef.capture(
-		&"mid", DotObjectiveArea.cylinder(Vector3.ZERO, 5.0), RATE
+	var mid := GSObjectiveDef.capture(
+		&"mid", GSObjectiveArea.cylinder(Vector3.ZERO, 5.0), RATE
 	)
-	var blue_pt := DotObjectiveDef.capture(
-		&"blue_point", DotObjectiveArea.cylinder(Vector3(50, 0, 0), 5.0), RATE
+	var blue_pt := GSObjectiveDef.capture(
+		&"blue_point", GSObjectiveArea.cylinder(Vector3(50, 0, 0), 5.0), RATE
 	)
 	blue_pt.initial_team = 2
 	blue_pt.requires_owned = {1: [&"mid"]}
 	red_pt.requires_owned = {2: [&"mid"]}
 
-	var defs: Array[DotObjectiveDef] = [red_pt, mid, blue_pt]
-	var built := DotObjectiveSet.build(defs)
+	var defs: Array[GSObjectiveDef] = [red_pt, mid, blue_pt]
+	var built := GSObjectiveSet.build(defs)
 	_check(built.ok, "the set builds")
-	var set_: DotObjectiveSet = built.value
+	var set_: GSObjectiveSet = built.value
 
 	var world := World.new()
 	world.add("red", 1, Vector3(50, 0, 0))
 	var p := world.presence()
-	var rules := DotObjectiveRules.new()
+	var rules := GSObjectiveRules.new()
 	rules.live = true
 
-	var blue_point := set_.objective(&"blue_point") as DotObjectiveCapture
+	var blue_point := set_.objective(&"blue_point") as GSObjectiveCapture
 	for t in range(1, 4 * RATE):
 		blue_point.advance(t, p, rules)
 	_check(
@@ -99,7 +99,7 @@ func _test_set_gating() -> void:
 	)
 
 	world.move("red", Vector3.ZERO)
-	var middle := set_.objective(&"mid") as DotObjectiveCapture
+	var middle := set_.objective(&"mid") as GSObjectiveCapture
 	for t in range(1, 4 * RATE):
 		middle.advance(t, p, rules)
 	_check(middle.owner_team == 1, "red takes the middle")
@@ -116,23 +116,23 @@ func _test_set_gating() -> void:
 	_set_refusals(set_)
 
 
-func _set_refusals(set_: DotObjectiveSet) -> void:
-	var missing := DotObjectiveDef.capture(
-		&"lonely", DotObjectiveArea.sphere(Vector3.ZERO, 2.0)
+func _set_refusals(set_: GSObjectiveSet) -> void:
+	var missing := GSObjectiveDef.capture(
+		&"lonely", GSObjectiveArea.sphere(Vector3.ZERO, 2.0)
 	)
 	missing.requires_owned = {1: [&"nowhere"]}
-	var built2 := DotObjectiveSet.build([missing] as Array[DotObjectiveDef])
-	var set2: DotObjectiveSet = built2.value
+	var built2 := GSObjectiveSet.build([missing] as Array[GSObjectiveDef])
+	var set2: GSObjectiveSet = built2.value
 	_check(
 		not set2.objective(&"lonely").team_allowed(1),
 		"a prerequisite that is not in the set refuses rather than silently allowing, "
 		+ "because allowing turns a tug of war back into a race"
 	)
 
-	var dup := DotObjectiveDef.capture(&"same", DotObjectiveArea.sphere(Vector3.ZERO, 2.0))
-	var dup2 := DotObjectiveDef.capture(&"same", DotObjectiveArea.sphere(Vector3.ZERO, 2.0))
+	var dup := GSObjectiveDef.capture(&"same", GSObjectiveArea.sphere(Vector3.ZERO, 2.0))
+	var dup2 := GSObjectiveDef.capture(&"same", GSObjectiveArea.sphere(Vector3.ZERO, 2.0))
 	_check(
-		not DotObjectiveSet.build([dup, dup2] as Array[DotObjectiveDef]).ok,
+		not GSObjectiveSet.build([dup, dup2] as Array[GSObjectiveDef]).ok,
 		"two objectives with one id are refused"
 	)
 
@@ -150,16 +150,16 @@ func _set_refusals(set_: DotObjectiveSet) -> void:
 func _test_manager() -> void:
 	_section("the manager")
 
-	var manager := DotObjectiveManager.new()
+	var manager := GSObjectiveManager.new()
 	add_child(manager)
 
 	var world := World.new()
 	world.add("red", 1, Vector3(1, 0, 0))
 	manager.presence = world.presence()
 
-	var a := DotObjectiveDef.capture(&"a", DotObjectiveArea.cylinder(Vector3.ZERO, 5.0), RATE)
-	var b := DotObjectiveDef.capture(&"b", DotObjectiveArea.cylinder(Vector3(50, 0, 0), 5.0), RATE)
-	var res := manager.setup([a, b] as Array[DotObjectiveDef])
+	var a := GSObjectiveDef.capture(&"a", GSObjectiveArea.cylinder(Vector3.ZERO, 5.0), RATE)
+	var b := GSObjectiveDef.capture(&"b", GSObjectiveArea.cylinder(Vector3(50, 0, 0), 5.0), RATE)
+	var res := manager.setup([a, b] as Array[GSObjectiveDef])
 	_check(res.ok, "it sets up")
 	_check(manager.has_objectives(), "and has objectives")
 
@@ -201,15 +201,15 @@ func _test_manager() -> void:
 		manager.advance(t)
 	_check(sweeps.size() == 1, "and it is announced exactly once")
 
-	_manager_wire(manager, [a, b] as Array[DotObjectiveDef])
+	_manager_wire(manager, [a, b] as Array[GSObjectiveDef])
 
 	var lines := manager.describe_lines()
 	_check(lines.size() > 2, "and it describes itself")
 	manager.queue_free()
 
 
-func _manager_wire(manager: DotObjectiveManager, defs: Array[DotObjectiveDef]) -> void:
-	var mirror := DotObjectiveManager.new()
+func _manager_wire(manager: GSObjectiveManager, defs: Array[GSObjectiveDef]) -> void:
+	var mirror := GSObjectiveManager.new()
 	mirror.authoritative = false
 	add_child(mirror)
 	var mres := mirror.setup(defs)
@@ -241,12 +241,12 @@ func _test_two_dimensions() -> void:
 	# second code path to run there.
 	var world := World.new()
 	var here := Vector2(30.0, -12.0)
-	var def := DotObjectiveDef.capture(&"flat", DotObjectiveArea.of_2d(here, 4.0), RATE)
-	var obj := DotObjectiveCapture.new(def)
-	var rules := DotObjectiveRules.new()
+	var def := GSObjectiveDef.capture(&"flat", GSObjectiveArea.of_2d(here, 4.0), RATE)
+	var obj := GSObjectiveCapture.new(def)
+	var rules := GSObjectiveRules.new()
 	rules.live = true
 
-	world.add("a", 1, DotObjectiveArea.point_2d(here + Vector2(1.0, 1.0)))
+	world.add("a", 1, GSObjectiveArea.point_2d(here + Vector2(1.0, 1.0)))
 	var p := world.presence()
 
 	var t := 0
@@ -259,18 +259,18 @@ func _test_two_dimensions() -> void:
 		"in the same number of ticks as the 3D one"
 	)
 
-	var cart_def := DotObjectiveDef.payload(
+	var cart_def := GSObjectiveDef.payload(
 		&"flat_cart",
 		PackedVector3Array([
-			DotObjectiveArea.point_2d(Vector2.ZERO),
-			DotObjectiveArea.point_2d(Vector2(20.0, 0.0)),
+			GSObjectiveArea.point_2d(Vector2.ZERO),
+			GSObjectiveArea.point_2d(Vector2(20.0, 0.0)),
 		])
 	)
 	cart_def.initial_team = 1
 	cart_def.payload_speed = 0.5
-	var cart := DotObjectivePayload.new(cart_def)
+	var cart := GSObjectivePayload.new(cart_def)
 	var w2 := World.new()
-	w2.add("a", 1, DotObjectiveArea.point_2d(Vector2(0.5, 0.0)))
+	w2.add("a", 1, GSObjectiveArea.point_2d(Vector2(0.5, 0.0)))
 	var p2 := w2.presence()
 	cart.advance(1, p2, rules)
 	_check(cart.distance > 0.0, "and a 2D cart rolls")

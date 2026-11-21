@@ -35,8 +35,8 @@ Copy `addons/dot_objective/` and dot-core's `addons/dot_core/` into your project
 ## Use
 
 ```gdscript
-var objectives := DotObjectiveManager.new()
-objectives.presence = DotObjectivePresence.of(
+var objectives := GSObjectiveManager.new()
+objectives.presence = GSObjectivePresence.of(
     roster.keys,          # () -> PackedStringArray
     world.position_of,    # (key) -> Vector3
     match_node.team_of,   # (key) -> int, teams start at 1
@@ -45,7 +45,7 @@ objectives.presence = DotObjectivePresence.of(
 objectives.score_fn = func(id, team, by, points, player_points):
     match_node.report_objective(by, id, tick, points)
 
-var res := objectives.setup(map.objectives)   # an Array[DotObjectiveDef]
+var res := objectives.setup(map.objectives)   # an Array[GSObjectiveDef]
 if not res.ok:
     push_error(res.error.message)
 add_child(objectives)
@@ -57,15 +57,15 @@ objectives.reset_round()     # between rounds
 
 Nothing makes progress until `set_live(true)`, because during warmup everybody stands on everything. Turn it off again for freeze time and at the end of a round.
 
-Each kind has a factory on `DotObjectiveDef`:
+Each kind has a factory on `GSObjectiveDef`:
 
 ```gdscript
-DotObjectiveDef.capture(&"mid", DotObjectiveArea.cylinder(Vector3.ZERO, 4.0))
-DotObjectiveDef.bomb(&"site_a", DotObjectiveArea.box(site_centre, Vector3(4, 2, 4)))
-DotObjectiveDef.payload(&"cart", path_points)   # then set capturable_by to the pushing team
-DotObjectiveDef.flag(&"red_flag", DotObjectiveArea.sphere(red_base, 2.0), 1)
-DotObjectiveDef.rescue(&"hostages", start_points, DotObjectiveArea.sphere(exit, 3.0))
-DotObjectiveDef.holdout(&"radio", 10800)
+GSObjectiveDef.capture(&"mid", GSObjectiveArea.cylinder(Vector3.ZERO, 4.0))
+GSObjectiveDef.bomb(&"site_a", GSObjectiveArea.box(site_centre, Vector3(4, 2, 4)))
+GSObjectiveDef.payload(&"cart", path_points)   # then set capturable_by to the pushing team
+GSObjectiveDef.flag(&"red_flag", GSObjectiveArea.sphere(red_base, 2.0), 1)
+GSObjectiveDef.rescue(&"hostages", start_points, GSObjectiveArea.sphere(exit, 3.0))
+GSObjectiveDef.holdout(&"radio", 10800)
 ```
 
 Set `capturable_by` to limit which teams may act on an objective (a bomb site only one side plants at), `initial_team` for who owns it at the start, and `requires_owned` to lock a point until a team owns the one before it. A payload needs a pushing team, from `capturable_by` or `initial_team`, or nobody can push it.
@@ -101,10 +101,10 @@ mirror.apply_wire(wire_from_the_server)   # the server sends objectives.to_wire(
 
 ## Settings
 
-Round-wide rules live in a `DotObjectiveRules` resource set on the manager's `rules` (a default is made if you leave it empty). It is layered like every GameSpice config: defaults, JSON file, `DOT_OBJECTIVE_*` environment, `--objective-*` command line. Call `load_layered()` before `setup()`:
+Round-wide rules live in a `GSObjectiveRules` resource set on the manager's `rules` (a default is made if you leave it empty). It is layered like every GameSpice config: defaults, JSON file, `DOT_OBJECTIVE_*` environment, `--objective-*` command line. Call `load_layered()` before `setup()`:
 
 ```gdscript
-var rules := DotObjectiveRules.new()
+var rules := GSObjectiveRules.new()
 rules.load_layered("user://objectives.json")
 objectives.rules = rules
 ```
@@ -128,7 +128,7 @@ GS_OBJECTIVE_BLOCK_STYLE=0 godot --headless -- --objective-deteriorate-ticks=384
 | `overtime` | false | Overtime is on. Use `set_overtime()`. |
 | `announce_only` | true | Completing a `wins_round` objective emits `round_objective_met` and does nothing else. This addon never ends a round, so there is no other value. |
 
-### Per objective (`DotObjectiveDef`)
+### Per objective (`GSObjectiveDef`)
 
 Each objective carries its own timings as fields. Ticks are at 64 per second.
 

@@ -15,14 +15,14 @@ Those are solved problems with twenty years of play behind them. This addon is t
 
 ## An objective is a rule about a place, and nothing else
 
-It has no body, no collision shape, no node, and it never moves anything. A `DotObjectiveArea` is a centre, a size and a `contains()`; a payload has a *distance* along a path and `position()` turns that into a point for the game to draw a cart at.
+It has no body, no collision shape, no node, and it never moves anything. A `GSObjectiveArea` is a centre, a size and a `contains()`; a payload has a *distance* along a path and `position()` turns that into a point for the game to draw a cart at.
 
 That is what lets the whole addon run in a headless suite with a dictionary of positions in it, in a 2D game on the XZ plane, and in a client that is mirroring rather than simulating: three deployment shapes, no second code path, and by this family's own repeated lesson three shapes is where the bugs would otherwise be.
 
 ## What it is not
 
 - **Not a round loop.** It emits `round_objective_met`; GameSpice Match ends rounds. This addon does not import GameSpice Match and could not, because a control point is the same rule in a game with no match loop at all.
-- **Not a scoreboard.** `score_fn` is one callable; game-fatal-contact's calls `DotMatch.report_objective`.
+- **Not a scoreboard.** `score_fn` is one callable; game-fatal-contact's calls `GSMatch.report_objective`.
 - **Not an item system.** The bomb is not an item; a game hands it to somebody with `give_to` and drops it with `drop_at`. Whether that is a loadout slot, a prop or a boolean is the game's business, and every one of those still needs the plant timer.
 - **Not a navigation system.** A rescue follower *trails* its rescuer. An escort that pathfinds is one that cannot run headless, cannot run in 2D, and has quietly become a second and worse [GameSpice NPC](../../dot-npc).
 
@@ -38,13 +38,13 @@ The nth capper adds `1/n`. Two players are worth 1.5, three are worth 1.83, five
 
 ## Locking is per team
 
-`DotObjectiveDef.requires_owned` is keyed by team id, and `DotObjective.team_gate` answers per team. A five-point map is a tug of war rather than a race precisely because the same point, at the same instant, is available to one side and forbidden to the other. A single `locked` boolean cannot say that; every mode built on one lets a losing team run past everything and win at the far end.
+`GSObjectiveDef.requires_owned` is keyed by team id, and `GSObjective.team_gate` answers per team. A five-point map is a tug of war rather than a race precisely because the same point, at the same instant, is available to one side and forbidden to the other. A single `locked` boolean cannot say that; every mode built on one lets a losing team run past everything and win at the far end.
 
 A prerequisite naming an objective that is not in the set **refuses**, loudly. Allowing it is the failure mode this gate exists to prevent.
 
 ### The gate reaches its set through a weak reference
 
-`DotObjectiveSet._wire` hands every objective a `team_gate` lambda that asks the set `owns_all`. A lambda that calls a method on the set captures the set, the objective holds the lambda and the set holds the objective: two `RefCounted`s pointing at each other, which GDScript never frees. The lambda holds a `weakref` to the set instead, and an objective that outlives its set (one nobody is playing) has an open gate.
+`GSObjectiveSet._wire` hands every objective a `team_gate` lambda that asks the set `owns_all`. A lambda that calls a method on the set captures the set, the objective holds the lambda and the set holds the objective: two `RefCounted`s pointing at each other, which GDScript never frees. The lambda holds a `weakref` to the set instead, and an objective that outlives its set (one nobody is playing) has an open gate.
 
 ## Ticks, and no wall clock anywhere
 
@@ -68,12 +68,12 @@ A bomb being defused re-checks every tick that the defuser is alive, on the righ
 
 ## Deliberately not here
 
-- **No round layouts as a document.** `DotObjectiveSet.set_round()` takes ids and owners; a map that wants five different round configurations declares them in its own file. A schema for that is a schema for one game's idea of a round.
+- **No round layouts as a document.** `GSObjectiveSet.set_round()` takes ids and owners; a map that wants five different round configurations declares them in its own file. A schema for that is a schema for one game's idea of a round.
 - **No respawn-time adjustment on capture.** The class-based objective shooters shorten the defenders' wave when a point falls. That is GameSpice Match's respawn queue and belongs there.
 - **No overtime decision.** `rules.overtime` is a switch a game sets; deciding when a round is in overtime needs the round clock, which is dot-match's.
 - **No hostage pathing, no cart model, no capture-point prop.** Art and navigation.
-- **No area entity in the editor.** GameSpice Timer ships `DotTimerZonePainter` because a speedrun zone is drawn by a mapper on a surface; an objective area is three numbers in a map's own definition file, and a painter for it would be a fourth way to write them.
+- **No area entity in the editor.** GameSpice Timer ships `GSTimerZonePainter` because a speedrun zone is drawn by a mapper on a surface; an objective area is three numbers in a map's own definition file, and a painter for it would be a fourth way to write them.
 
 ## Capture the flag for any number of teams
 
-`DotObjectiveCtf` builds one flag per team with `flag_capture_at_own_stand`, so a carrier scores at their own team's stand and the same defs work for two, three or eight teams. The stand positions come from the game (dot-spawn's `DotSpawnFlags.bases` reads authored `flag` spawns and falls back to clusters of the player spawns). A carrier takes no second flag, a dropper waits `flag_pickup_delay_ticks` before taking it back, and the server alone decides: a mirror applies `to_wire()` and raises no events of its own. The capture limit and the time limit end the match through `ended`; the game decides what ending means.
+`GSObjectiveCtf` builds one flag per team with `flag_capture_at_own_stand`, so a carrier scores at their own team's stand and the same defs work for two, three or eight teams. The stand positions come from the game (dot-spawn's `GSSpawnFlags.bases` reads authored `flag` spawns and falls back to clusters of the player spawns). A carrier takes no second flag, a dropper waits `flag_pickup_delay_ticks` before taking it back, and the server alone decides: a mirror applies `to_wire()` and raises no events of its own. The capture limit and the time limit end the match through `ended`; the game decides what ending means.

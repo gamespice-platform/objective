@@ -11,7 +11,7 @@ const _ICON := "res://addons/dot_objective/icon_placeholder.svg"
 
 const _TYPES := [
 	[
-		"DotObjectiveManager",
+		"GSObjectiveManager",
 		"Node",
 		"res://addons/dot_objective/runtime/dot_objective_manager.gd",
 	],
