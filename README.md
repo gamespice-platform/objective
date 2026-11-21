@@ -30,7 +30,7 @@ Tick counts here assume 64 ticks per second.
 
 ## Install
 
-Copy `addons/dot_objective/` and dot-core's `addons/dot_core/` into your project and enable dot-objective under **Project > Project Settings > Plugins**. [GameSpice Bootstrap](https://github.com/gamespice-platform/bootstrap) can set up a whole project for you. Needs Godot 4.7 or newer.
+Copy `addons/gs_objective/` and gs-core's `addons/gs_core/` into your project and enable gs-objective under **Project > Project Settings > Plugins**. [GameSpice Bootstrap](https://github.com/gamespice-platform/bootstrap) can set up a whole project for you. Needs Godot 4.7 or newer.
 
 ## Use
 
@@ -101,7 +101,7 @@ mirror.apply_wire(wire_from_the_server)   # the server sends objectives.to_wire(
 
 ## Settings
 
-Round-wide rules live in a `GSObjectiveRules` resource set on the manager's `rules` (a default is made if you leave it empty). It is layered like every GameSpice config: defaults, JSON file, `DOT_OBJECTIVE_*` environment, `--objective-*` command line. Call `load_layered()` before `setup()`:
+Round-wide rules live in a `GSObjectiveRules` resource set on the manager's `rules` (a default is made if you leave it empty). It is layered like every GameSpice config: defaults, JSON file, `GS_OBJECTIVE_*` environment, `--objective-*` command line. Call `load_layered()` before `setup()`:
 
 ```gdscript
 var rules := GSObjectiveRules.new()

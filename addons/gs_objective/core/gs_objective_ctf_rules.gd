@@ -2,7 +2,7 @@
 class_name GSObjectiveCtfRules
 extends GSConfig
 
-## Every number capture-the-flag has, as one layered config (defaults < JSON < environment `DOT_CTF_*` < command line `--ctf-*`). A game maps its cvars onto these fields.
+## Every number capture-the-flag has, as one layered config (defaults < JSON < environment `GS_CTF_*` < command line `--ctf-*`). A game maps its cvars onto these fields.
 
 ## Captures that win the match; 0 is no limit.
 @export_range(0, 1000, 1) var capture_limit: int = 3
@@ -36,7 +36,7 @@ extends GSConfig
 
 
 func env_prefix() -> String:
-	return "DOT_CTF_"
+	return "GS_CTF_"
 
 
 func cli_prefix() -> String:

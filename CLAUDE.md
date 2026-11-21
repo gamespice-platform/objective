@@ -4,7 +4,7 @@ What a round is **about**: control points, a bomb, a payload, a flag, a rescue a
 
 Read the family [CLAUDE.md](../../CLAUDE.md) first; this file is only what is specific to objectives.
 
-**The distributable is `addons/dot_objective/`.** It requires [GameSpice Core](../dot-core) and nothing else (`ln -s ../../dot-core/addons/dot_core addons/dot_core`, gitignored). It does not import dot-match; game-fatal-contact is the game on it.
+**The distributable is `addons/gs_objective/`.** It requires [GameSpice Core](../gs-core) and nothing else (`ln -s ../../gs-core/addons/gs_core addons/gs_core`, gitignored). It does not import gs-match; game-fatal-contact is the game on it.
 
 ## Read before
 
@@ -17,19 +17,19 @@ Read the family [CLAUDE.md](../../CLAUDE.md) first; this file is only what is sp
 
 | Path | What |
 | --- | --- |
-| `core/dot_objective_area.gd` | `GSObjectiveArea`: where. Sphere, cylinder, box, everywhere; 2D is the XZ plane |
-| `core/dot_objective_def.gd` | `GSObjectiveDef`: the document. Six kinds, validated before anything is built |
-| `core/dot_objective_rules.gd` | `GSObjectiveRules`: every cross-objective policy, a `GSConfig` |
-| `core/dot_objective_presence.gd` | `GSObjectivePresence`: the whole coupling to a game, as callables (`participants_fn`, `position_fn`, `team_fn`, `alive_fn`, `capture_value_fn`, `may_capture_fn`, `may_block_fn`) |
-| `core/dot_objective.gd` | `GSObjective`: the base. Phase, owner, the wire form, "complete exactly once" |
+| `core/gs_objective_area.gd` | `GSObjectiveArea`: where. Sphere, cylinder, box, everywhere; 2D is the XZ plane |
+| `core/gs_objective_def.gd` | `GSObjectiveDef`: the document. Six kinds, validated before anything is built |
+| `core/gs_objective_rules.gd` | `GSObjectiveRules`: every cross-objective policy, a `GSConfig` |
+| `core/gs_objective_presence.gd` | `GSObjectivePresence`: the whole coupling to a game, as callables (`participants_fn`, `position_fn`, `team_fn`, `alive_fn`, `capture_value_fn`, `may_capture_fn`, `may_block_fn`) |
+| `core/gs_objective.gd` | `GSObjective`: the base. Phase, owner, the wire form, "complete exactly once" |
 | `kinds/` | `GSObjectiveCapture`, `...Bomb` (plant, fuse, defuse, kit, drop, pick up), `...Payload` (three speeds, hills, checkpoints, receding), `...Flag`, `...Rescue`, `...Holdout` |
-| `core/dot_objective_ctf_rules.gd` | `GSObjectiveCtfRules`: every capture-the-flag number (capture and time limit, return and drop seconds, carrier speed, friendly return, flag-at-home, team count), `DOT_CTF_*` / `--ctf-*` |
-| `runtime/dot_objective_ctf.gd` | `GSObjectiveCtf`: capture the flag for N teams over a manager of `flag` objectives (a stand per team, scored at the carrier's own stand), touch polling, death drop, `speed_scale`, `hud_state`, `ended`, wire |
-| `runtime/dot_objective_set.gd` | `GSObjectiveSet`: the ordered set, the round layout, the per-team gate |
-| `runtime/dot_objective_manager.gd` | `GSObjectiveManager`: the one node a game holds; `score_fn`, `round_objective_met` |
+| `core/gs_objective_ctf_rules.gd` | `GSObjectiveCtfRules`: every capture-the-flag number (capture and time limit, return and drop seconds, carrier speed, friendly return, flag-at-home, team count), `GS_CTF_*` / `--ctf-*` |
+| `runtime/gs_objective_ctf.gd` | `GSObjectiveCtf`: capture the flag for N teams over a manager of `flag` objectives (a stand per team, scored at the carrier's own stand), touch polling, death drop, `speed_scale`, `hud_state`, `ended`, wire |
+| `runtime/gs_objective_set.gd` | `GSObjectiveSet`: the ordered set, the round layout, the per-team gate |
+| `runtime/gs_objective_manager.gd` | `GSObjectiveManager`: the one node a game holds; `score_fn`, `round_objective_met` |
 | `examples/objective_selftest.tscn` | the suite |
 
-Paths except `examples/` are in `addons/dot_objective/`.
+Paths except `examples/` are in `addons/gs_objective/`.
 
 ## Running and testing
 

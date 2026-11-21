@@ -4,7 +4,7 @@ Why GameSpice Objective is shaped the way it is, and why the obvious alternative
 
 ## Why this exists
 
-[GameSpice Match](../../dot-match) has the round loop: warmup, countdown, rounds, scoring, teams, spawning, respawning. It has `report_objective(key, counter, tick, points)` (a *number* a game increments) and nothing that decides when to increment it. So every game that wanted a mode wrote its own capture clock, its own plant timer, its own flag rules, and every one of them got the same four things wrong:
+[GameSpice Match](../../gs-match) has the round loop: warmup, countdown, rounds, scoring, teams, spawning, respawning. It has `report_objective(key, counter, tick, points)` (a *number* a game increments) and nothing that decides when to increment it. So every game that wanted a mode wrote its own capture clock, its own plant timer, its own flag rules, and every one of them got the same four things wrong:
 
 - **The capture rate.** One player, two players, five players. Every hand-written version is linear, which makes a point a headcount and a mode a race to bring more people.
 - **Blocking.** Two teams on one point either has to pause the clock or break it, and the version that does neither is the one where the losing team cannot defend.
@@ -24,7 +24,7 @@ That is what lets the whole addon run in a headless suite with a dictionary of p
 - **Not a round loop.** It emits `round_objective_met`; GameSpice Match ends rounds. This addon does not import GameSpice Match and could not, because a control point is the same rule in a game with no match loop at all.
 - **Not a scoreboard.** `score_fn` is one callable; game-fatal-contact's calls `GSMatch.report_objective`.
 - **Not an item system.** The bomb is not an item; a game hands it to somebody with `give_to` and drops it with `drop_at`. Whether that is a loadout slot, a prop or a boolean is the game's business, and every one of those still needs the plant timer.
-- **Not a navigation system.** A rescue follower *trails* its rescuer. An escort that pathfinds is one that cannot run headless, cannot run in 2D, and has quietly become a second and worse [GameSpice NPC](../../dot-npc).
+- **Not a navigation system.** A rescue follower *trails* its rescuer. An escort that pathfinds is one that cannot run headless, cannot run in 2D, and has quietly become a second and worse [GameSpice NPC](../../gs-npc).
 
 ## `capture_ticks` means what it says
 
@@ -70,10 +70,10 @@ A bomb being defused re-checks every tick that the defuser is alive, on the righ
 
 - **No round layouts as a document.** `GSObjectiveSet.set_round()` takes ids and owners; a map that wants five different round configurations declares them in its own file. A schema for that is a schema for one game's idea of a round.
 - **No respawn-time adjustment on capture.** The class-based objective shooters shorten the defenders' wave when a point falls. That is GameSpice Match's respawn queue and belongs there.
-- **No overtime decision.** `rules.overtime` is a switch a game sets; deciding when a round is in overtime needs the round clock, which is dot-match's.
+- **No overtime decision.** `rules.overtime` is a switch a game sets; deciding when a round is in overtime needs the round clock, which is gs-match's.
 - **No hostage pathing, no cart model, no capture-point prop.** Art and navigation.
 - **No area entity in the editor.** GameSpice Timer ships `GSTimerZonePainter` because a speedrun zone is drawn by a mapper on a surface; an objective area is three numbers in a map's own definition file, and a painter for it would be a fourth way to write them.
 
 ## Capture the flag for any number of teams
 
-`GSObjectiveCtf` builds one flag per team with `flag_capture_at_own_stand`, so a carrier scores at their own team's stand and the same defs work for two, three or eight teams. The stand positions come from the game (dot-spawn's `GSSpawnFlags.bases` reads authored `flag` spawns and falls back to clusters of the player spawns). A carrier takes no second flag, a dropper waits `flag_pickup_delay_ticks` before taking it back, and the server alone decides: a mirror applies `to_wire()` and raises no events of its own. The capture limit and the time limit end the match through `ended`; the game decides what ending means.
+`GSObjectiveCtf` builds one flag per team with `flag_capture_at_own_stand`, so a carrier scores at their own team's stand and the same defs work for two, three or eight teams. The stand positions come from the game (gs-spawn's `GSSpawnFlags.bases` reads authored `flag` spawns and falls back to clusters of the player spawns). A carrier takes no second flag, a dropper waits `flag_pickup_delay_ticks` before taking it back, and the server alone decides: a mirror applies `to_wire()` and raises no events of its own. The capture limit and the time limit end the match through `ended`; the game decides what ending means.

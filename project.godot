@@ -10,7 +10,7 @@ config_version=5
 
 [application]
 
-config/name="dot-objective"
+config/name="gs-objective"
 config/description="What a round is about: control points with Source's capture curve, a bomb to plant and defuse, a payload on a path, capture the flag, an escort and a holdout clock — as one document a server validates without loading anything, counted in ticks and driven by one call."
 run/main_scene="res://examples/objective_selftest.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
@@ -23,7 +23,7 @@ window/size/viewport_height=900
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/dot_objective/plugin.cfg")
+enabled=PackedStringArray("res://addons/gs_objective/plugin.cfg")
 
 [importer_defaults]
 

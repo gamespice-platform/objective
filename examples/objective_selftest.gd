@@ -8,7 +8,7 @@ func _ready() -> void:
 
 
 func _run() -> void:
-	_line("dot-objective self-test")
+	_line("gs-objective self-test")
 	_line("")
 
 	_test_area()
@@ -236,7 +236,7 @@ func _manager_wire(manager: GSObjectiveManager, defs: Array[GSObjectiveDef]) -> 
 func _test_two_dimensions() -> void:
 	_section("the same rule in 2D")
 
-	# A 2D world is the XZ plane, which is the decision dot-npc made and everything
+	# A 2D world is the XZ plane, which is the decision gs-npc made and everything
 	# downstream of it inherited. The check that matters is that nothing here needed a
 	# second code path to run there.
 	var world := World.new()

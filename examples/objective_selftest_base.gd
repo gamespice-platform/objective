@@ -1,6 +1,6 @@
 extends Node
 
-## Exercises dot-objective with no other addon, no world and no transport: every check
+## Exercises gs-objective with no other addon, no world and no transport: every check
 ## drives the objectives out of a dictionary of positions, the seam a real game fills with
 ## its roster.
 

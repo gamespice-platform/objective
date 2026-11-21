@@ -91,7 +91,7 @@ extends GSConfig
 
 
 func env_prefix() -> String:
-	return "DOT_OBJECTIVE_"
+	return "GS_OBJECTIVE_"
 
 
 func cli_prefix() -> String:

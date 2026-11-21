@@ -32,7 +32,7 @@ func _test_area() -> void:
 	var flat := GSObjectiveArea.of_2d(Vector2(3.0, 4.0), 2.0)
 	_check(
 		flat.contains_2d(Vector2(4.0, 4.0)),
-		"a 2D area contains a 2D point, on the XZ plane dot-npc settled on"
+		"a 2D area contains a 2D point, on the XZ plane gs-npc settled on"
 	)
 	_check(
 		flat.centre_2d() == Vector2(3.0, 4.0),

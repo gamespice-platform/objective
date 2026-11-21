@@ -7,13 +7,13 @@ extends EditorPlugin
 ## twice over: a server that simulates and a client that mirrors are two of them in one
 ## process, and a suite that plays both halves of a capture is a third.
 
-const _ICON := "res://addons/dot_objective/icon_placeholder.svg"
+const _ICON := "res://addons/gs_objective/icon_placeholder.svg"
 
 const _TYPES := [
 	[
 		"GSObjectiveManager",
 		"Node",
-		"res://addons/dot_objective/runtime/dot_objective_manager.gd",
+		"res://addons/gs_objective/runtime/gs_objective_manager.gd",
 	],
 ]
 
