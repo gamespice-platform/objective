@@ -36,6 +36,7 @@ func _run() -> void:
 	_test_ctf_limits()
 	_test_ctf_three_teams()
 	_test_ctf_wire()
+	_test_ctf_living()
 
 	_line("")
 	_line("%d sections, %d passed, %d failed" % [_section_count, _passed, _failed])

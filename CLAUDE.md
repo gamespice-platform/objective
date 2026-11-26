@@ -20,7 +20,7 @@ Read the family [CLAUDE.md](../../CLAUDE.md) first; this file is only what is sp
 | `core/gs_objective_area.gd` | `GSObjectiveArea`: where. Sphere, cylinder, box, everywhere; 2D is the XZ plane |
 | `core/gs_objective_def.gd` | `GSObjectiveDef`: the document. Six kinds, validated before anything is built |
 | `core/gs_objective_rules.gd` | `GSObjectiveRules`: every cross-objective policy, a `GSConfig` |
-| `core/gs_objective_presence.gd` | `GSObjectivePresence`: the whole coupling to a game, as callables (`participants_fn`, `position_fn`, `team_fn`, `alive_fn`, `capture_value_fn`, `may_capture_fn`, `may_block_fn`) |
+| `core/gs_objective_presence.gd` | `GSObjectivePresence`: the whole coupling to a game, as callables (`participants_fn`, `position_fn`, `team_fn`, `alive_fn`, `capture_value_fn`, `may_capture_fn`, `may_block_fn`, and API 2's optional `living_fn`, which returns `[keys, positions]` of the living in one call so the CTF flag poll and `counts_in` skip per-player callables) |
 | `core/gs_objective.gd` | `GSObjective`: the base. Phase, owner, the wire form, "complete exactly once" |
 | `kinds/` | `GSObjectiveCapture`, `...Bomb` (plant, fuse, defuse, kit, drop, pick up), `...Payload` (three speeds, hills, checkpoints, receding), `...Flag`, `...Rescue`, `...Holdout` |
 | `core/gs_objective_ctf_rules.gd` | `GSObjectiveCtfRules`: every capture-the-flag number (capture and time limit, return and drop seconds, carrier speed, friendly return, flag-at-home, team count), `GS_CTF_*` / `--ctf-*` |
@@ -45,6 +45,7 @@ The family's two steps ([family CLAUDE.md](../../CLAUDE.md#validating-anything))
 - `advance(tick)` is the only thing that moves state; no wall clock. [design](docs/design.md#ticks-and-no-wall-clock-anywhere)
 - With `authoritative = false`, `advance()` does nothing and only `apply_wire()` changes state; the wire form is the whole state. [design](docs/design.md#a-mirror-does-not-simulate)
 - Interruption (plant, defuse, carrier, rescue leader) is re-tested every tick, not left to the game's cancel call. [design](docs/design.md#interruption-is-re-tested-every-tick-not-trusted)
+- API level lives in `gs_objective_api.gd` (2: `living_fn`/`living()`); a bad `living_fn` result warns and falls back to the per-player callables.
 - `may_block` never falls back to `may_capture`; a contested capture does not start; `_break` takes its recovery period from the caller. [design](docs/design.md#capture-details)
 
 Deliberately not here: round layouts as a document, respawn-time changes, the overtime decision, art and pathing, an editor painter. [design](docs/design.md#deliberately-not-here)
