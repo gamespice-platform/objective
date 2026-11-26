@@ -60,6 +60,15 @@ var may_capture_fn: Callable = Callable()
 ## unless the game says otherwise.
 var may_block_fn: Callable = Callable()
 
+## Optional, API 2: everybody alive, with where they are, in one call.
+## [code]() -> Array[/code] of two: a [PackedStringArray] of keys and a [PackedVector3Array] of their positions.
+##
+## The same people in the same order as [member participants_fn] filtered by [member alive_fn], each at
+## [member position_fn]'s answer; [method living] builds exactly that from the three when this is unset. A game sets
+## it when it can answer from its own roster in one pass: a flag poll then makes no callable call per player per
+## flag. A participant whose position is meaningless (no body) may be left out, since nothing reaches it.
+var living_fn: Callable = Callable()
+
 
 ## One team's presence inside an area.
 class Count extends RefCounted:
@@ -131,6 +140,27 @@ func is_alive(key: String) -> bool:
 	return bool(alive_fn.call(key))
 
 
+## The living participants and their positions, [code][keys, positions][/code] ([member living_fn]). Without it:
+## [method participants] in order, kept where [method is_alive], each at [method position_of].
+func living() -> Array:
+	if living_fn.is_valid():
+		var got: Variant = living_fn.call()
+		if got is Array and (got as Array).size() == 2:
+			var keys: Variant = got[0]
+			var at: Variant = got[1]
+			if keys is PackedStringArray and at is PackedVector3Array and (keys as PackedStringArray).size() == (at as PackedVector3Array).size():
+				return got
+		GSLog.warn("objective", "living_fn returned something other than [keys, positions]; asking each participant instead", {})
+	var keys := PackedStringArray()
+	var at := PackedVector3Array()
+	for key in participants():
+		if not is_alive(key):
+			continue
+		keys.append(key)
+		at.append(position_of(key))
+	return [keys, at]
+
+
 func value_of(key: String) -> int:
 	if not capture_value_fn.is_valid():
 		return 1
@@ -165,11 +195,13 @@ func counts_in(area: GSObjectiveArea, allowed: PackedInt32Array = PackedInt32Arr
 	if area == null:
 		return out
 
-	for key in participants():
-		if not is_alive(key):
+	var alive := living()
+	var keys: PackedStringArray = alive[0]
+	var at: PackedVector3Array = alive[1]
+	for i in keys.size():
+		if not area.contains(at[i]):
 			continue
-		if not area.contains(position_of(key)):
-			continue
+		var key := keys[i]
 
 		var team := team_of(key)
 		if team <= 0:

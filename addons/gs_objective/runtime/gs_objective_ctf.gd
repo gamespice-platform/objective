@@ -133,7 +133,6 @@ func advance(tick: int, live: bool = true) -> void:
 
 ## Takes or returns every flag a living player stands on; a carrier takes no second flag.
 func _touch() -> void:
-	var keys := presence.participants()
 	var all := flags()
 	# Who carries, found once: a carried_by per key per flag walked the set again each time. A touch that
 	# picks a flag up adds its carrier below, so a carrier still takes no second flag.
@@ -141,12 +140,18 @@ func _touch() -> void:
 	for f in all:
 		if f.state == GSObjectiveFlag.State.CARRIED:
 			carrying[f.carrier] = true
+	# The living and where they stand, asked once a tick ([method GSObjectivePresence.living]) rather than per player
+	# per flag: a touch moves nobody, so every flag sees the same answers it would have asked for.
+	var alive := presence.living()
+	var keys: PackedStringArray = alive[0]
+	var at: PackedVector3Array = alive[1]
 	for f in all:
 		var reach := f.def.flag_touch_radius
-		for key in keys:
-			if carrying.has(key) or not presence.is_alive(key):
+		for i in keys.size():
+			var key := keys[i]
+			if carrying.has(key):
 				continue
-			if presence.position_of(key).distance_to(f.at) > reach:
+			if at[i].distance_to(f.at) > reach:
 				continue
 			if f.touch(key, presence).ok:
 				if f.state == GSObjectiveFlag.State.CARRIED:

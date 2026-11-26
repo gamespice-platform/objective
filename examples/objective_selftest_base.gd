@@ -4,8 +4,8 @@ extends Node
 ## drives the objectives out of a dictionary of positions, the seam a real game fills with
 ## its roster.
 
-const SECTIONS := 25
-const CHECKS := 254
+const SECTIONS := 26
+const CHECKS := 259
 
 ## 64 a second, which is what every "ticks" number below is quoted at.
 const RATE := 64
@@ -53,6 +53,19 @@ class World extends RefCounted:
 			return int(values.get(key, 1))
 		p.may_capture_fn = func(key: String) -> bool:
 			return bool(can_capture.get(key, true))
+		return p
+
+	## [method presence] with [member GSObjectivePresence.living_fn] answering from the dictionaries in one pass.
+	func presence_batched() -> GSObjectivePresence:
+		var p := presence()
+		p.living_fn = func() -> Array:
+			var out_keys := PackedStringArray()
+			var at := PackedVector3Array()
+			for key in keys():
+				if bool(alive.get(key, false)):
+					out_keys.append(key)
+					at.append(positions.get(key, Vector3.ZERO))
+			return [out_keys, at]
 		return p
 
 

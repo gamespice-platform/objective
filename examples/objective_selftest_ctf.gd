@@ -271,3 +271,52 @@ func _test_ctf_wire() -> void:
 	_check(events.is_empty(), "and raises no events of its own")
 	server.queue_free()
 	mirror.queue_free()
+
+
+## The flag poll over [member GSObjectivePresence.living_fn] against the same game asked player by player: the same
+## wire every tick through takes, a death drop, a pickup, a capture and a key that dies standing on a flag.
+func _test_ctf_living() -> void:
+	_section("ctf: a batched presence plays the same game")
+	var worlds: Array[World] = [World.new(), World.new()]
+	var games: Array[GSObjectiveCtf] = []
+	for k in 2:
+		var w := worlds[k]
+		w.add("a", 1, Vector3(-50, 0, 0))
+		w.add("b", 2, Vector3(50, 0, 0))
+		w.add("c", 2, Vector3(0, 0, 0))
+		var c := GSObjectiveCtf.new()
+		c.rules = GSObjectiveCtfRules.new()
+		c.presence = w.presence_batched() if k == 1 else w.presence()
+		c.tick_rate = RATE
+		add_child(c)
+		var _res := c.setup(_two_bases())
+		games.append(c)
+	var plain := worlds[0].presence().living()
+	var batched := worlds[1].presence_batched().living()
+	_check(plain[0] == batched[0] and plain[1] == batched[1], "living() is the same with and without living_fn")
+	worlds[0].kill("c")
+	_check((worlds[0].presence().living()[0] as PackedStringArray) == PackedStringArray(["a", "b"]), "and leaves the dead out")
+	worlds[0].alive["c"] = true
+	# [tick, key, where] moves, and [tick, key] deaths.
+	var moves := [[2, "a", Vector3(50, 0, 0)], [4, "c", Vector3(50, 0, 0)], [6, "a", Vector3(0, 0, 0)], [9, "c", Vector3(0, 0, 0)], [12, "c", Vector3(-50, 0, 0)], [15, "b", Vector3(-50, 0, 0)], [18, "b", Vector3(50, 0, 0)]]
+	var deaths := [[8, "a"], [16, "b"]]
+	var same := true
+	var wires: Array = []
+	for t in range(1, 24):
+		for k in 2:
+			for m: Array in moves:
+				if m[0] == t:
+					worlds[k].move(m[1], m[2])
+			for d: Array in deaths:
+				if d[0] == t:
+					worlds[k].kill(d[1])
+					games[k].player_died(d[1])
+			games[k].advance(t)
+		var one := JSON.stringify(games[0].to_json_wire())
+		same = same and one == JSON.stringify(games[1].to_json_wire())
+		wires.append(one)
+	_check(same, "the wire matches every tick")
+	_check(wires[1] != wires[0] and wires[8] != wires[1], "and the flags did move (the run is not idle)")
+	_check(games[0].scores == games[1].scores, "and the scores match")
+	for c in games:
+		c.queue_free()
