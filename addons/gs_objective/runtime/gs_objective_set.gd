@@ -22,6 +22,11 @@ var _by_id: Dictionary = {}
 ## Ids being played this round. Empty means all of them.
 var _round: Array[StringName] = []
 
+## [method flags], made once per [method rebuild] (and again if [member objectives] changes size): the CTF tick asks
+## for it several times a tick, and each asked for a new array.
+var _flags: Array[GSObjectiveFlag] = []
+var _flags_of := -1
+
 
 static func build(defs: Array[GSObjectiveDef]) -> GSResult:
 	var built := GSObjectiveSet.new()
@@ -35,6 +40,7 @@ func rebuild(defs: Array[GSObjectiveDef]) -> GSResult:
 	objectives.clear()
 	_by_id.clear()
 	_round.clear()
+	_flags_of = -1
 
 	for def in defs:
 		if def == null:
@@ -144,12 +150,16 @@ func of_kind(kind: GSObjectiveDef.Kind) -> Array[GSObjective]:
 	return out
 
 
+## Every flag, in set order. Shared and read-only: duplicate it before changing it.
 func flags() -> Array[GSObjectiveFlag]:
-	var out: Array[GSObjectiveFlag] = []
+	if _flags_of == objectives.size():
+		return _flags
+	_flags = []
 	for obj in objectives:
 		if obj is GSObjectiveFlag:
-			out.append(obj as GSObjectiveFlag)
-	return out
+			_flags.append(obj as GSObjectiveFlag)
+	_flags_of = objectives.size()
+	return _flags
 
 
 func owner_of(id: StringName) -> int:
