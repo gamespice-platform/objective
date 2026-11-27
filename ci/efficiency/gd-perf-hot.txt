@@ -3,3 +3,5 @@
 addons/gs_objective/core/*.gd
 addons/gs_objective/kinds/*.gd
 addons/gs_objective/runtime/*.gd
+# Run once (cvar/spec tables, config parsing, save/restore, descriptions), not per tick:
+cold+: ^(from_.*|describe.*|specs|cvar_specs|_absorb_specs|set_cvar|follow_cvars|validate.*|presets|properties|standard_pair|restore|_restore_.*|to_config|parse_.*|_parse_.*|find_spot)$

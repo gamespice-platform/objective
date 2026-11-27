@@ -9,12 +9,10 @@ addons/gs_objective/core/gs_objective.gd::team_allowed::dynamic_call	1
 addons/gs_objective/core/gs_objective.gd::to_wire::alloc	1
 addons/gs_objective/core/gs_objective.gd::to_wire::untyped_array	1
 addons/gs_objective/core/gs_objective_area.gd::describe::untyped_array	1
-addons/gs_objective/core/gs_objective_ctf_rules.gd::validate::string_build	1
 addons/gs_objective/core/gs_objective_def.gd::<members>::untyped_array	1
 addons/gs_objective/core/gs_objective_def.gd::describe::untyped_array	1
 addons/gs_objective/core/gs_objective_def.gd::requires_owned_for::alloc	2
 addons/gs_objective/core/gs_objective_def.gd::requires_owned_for::string_build	1
-addons/gs_objective/core/gs_objective_def.gd::validate::string_build	10
 addons/gs_objective/core/gs_objective_presence.gd::counts_in::alloc	1
 addons/gs_objective/core/gs_objective_presence.gd::counts_in::untyped_array	2
 addons/gs_objective/core/gs_objective_presence.gd::describe::untyped_array	1
@@ -27,9 +25,7 @@ addons/gs_objective/core/gs_objective_presence.gd::may_capture::dynamic_call	1
 addons/gs_objective/core/gs_objective_presence.gd::participants::dynamic_call	1
 addons/gs_objective/core/gs_objective_presence.gd::position_of::dynamic_call	1
 addons/gs_objective/core/gs_objective_presence.gd::team_of::dynamic_call	1
-addons/gs_objective/core/gs_objective_presence.gd::validate::string_build	2
 addons/gs_objective/core/gs_objective_presence.gd::value_of::dynamic_call	1
-addons/gs_objective/core/gs_objective_rules.gd::validate::string_build	2
 addons/gs_objective/kinds/gs_objective_bomb.gd::_apply_wire::dynamic_call	7
 addons/gs_objective/kinds/gs_objective_bomb.gd::_apply_wire::string_build	2
 addons/gs_objective/kinds/gs_objective_bomb.gd::_apply_wire::untyped_array	1
