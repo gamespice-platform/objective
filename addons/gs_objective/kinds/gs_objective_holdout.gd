@@ -31,6 +31,8 @@ var linked: GSObjective = null
 
 var _last_fraction: float = -1.0
 var _leader: int = 0
+## The one-team filter [method _teams_running] passes to [method GSObjectivePresence.counts_in], reused per tick.
+var _owner_only: PackedInt32Array = PackedInt32Array([0])
 
 
 func _init(p_def: GSObjectiveDef = null) -> void:
@@ -132,7 +134,8 @@ func _teams_running(presence: GSObjectivePresence) -> PackedInt32Array:
 		out.append(owner)
 		return out
 
-	var here := presence.counts_in(def.area, PackedInt32Array([owner]))
+	_owner_only[0] = owner
+	var here := presence.counts_in(def.area, _owner_only)
 	var mine: GSObjectivePresence.Count = here.get(owner, null)
 	if mine != null and mine.cappers > 0:
 		out.append(owner)

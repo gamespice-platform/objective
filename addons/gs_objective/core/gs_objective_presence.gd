@@ -68,6 +68,8 @@ var may_block_fn: Callable = Callable()
 ## it when it can answer from its own roster in one pass: a flag poll then makes no callable call per player per
 ## flag. A participant whose position is meaningless (no body) may be left out, since nothing reaches it.
 var living_fn: Callable = Callable()
+## The pair [method living] builds, reused (its two slots are replaced each call, the pair itself is not reallocated).
+var _living: Array[Variant] = [PackedStringArray(), PackedVector3Array()]
 
 
 ## One team's presence inside an area.
@@ -158,7 +160,9 @@ func living() -> Array:
 			continue
 		keys.append(key)
 		at.append(position_of(key))
-	return [keys, at]
+	_living[0] = keys
+	_living[1] = at
+	return _living
 
 
 func value_of(key: String) -> int:
