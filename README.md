@@ -2,7 +2,7 @@
 
 The part of a multiplayer game that says what a round is about: control points, a bomb to plant and defuse, a payload to push, a flag to capture, someone to escort out, and a clock to hold. It needs only [GameSpice Core](https://github.com/gamespice-platform/core). Part of TMC's open source [**GameSpice**](https://gamespice.net) collection (MIT licence).
 
-> Built with Claude Code. Every addon has a headless test suite and the suites pass, but little of this has met real players yet. Please report rough edges.
+> A GameSpice addon, MIT, built with Claude Code. `objective_selftest` is a headless suite you can run yourself (see Testing). The addon is not a shelf library: the games in [Zee's Games](https://zeesgames.com) are built on GameSpice addons and run on live servers, so this one gets used in real rounds.
 
 ## What it does
 
@@ -167,6 +167,15 @@ Each objective carries its own timings as fields. Ticks are at 64 per second.
 godot --headless --path . --import
 godot --headless --path . res://examples/objective_selftest.tscn
 ```
+
+## Used by
+
+Two games vendor it.
+
+- [Zombie Zone](https://zeesgames.com/zombie-zone)
+- [Fatal Contact](https://zeesgames.com/fatal-contact) - capture the flag and king of the hill are driven by objectives
+
+The whole collection is at [zeesgames.com](https://zeesgames.com).
 
 ## Licence
 
